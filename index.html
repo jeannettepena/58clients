@@ -303,9 +303,9 @@
   <div class="view-tabs ui" id="viewTabs"></div>
 </nav>
 
-<div class="upcoming-panel ui" id="upcoming"></div>
+<div class="page-wrap"><div class="upcoming-panel ui" id="upcoming"></div>
 
-</div><div class="page-wrap"><div class="stats-row ui" id="stats"></div>
+<div class="stats-row ui" id="stats"></div>
 
 <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:12px;">
   <div class="view-toggle" id="viewToggle">
@@ -337,7 +337,13 @@
   </div>
 </div>
 
-<div id="filterRows">
+<div style="margin-top:12px;">
+  <button id="filterToggle" onclick="toggleFilters()" style="display:flex;align-items:center;gap:6px;font-family:'Jost',sans-serif;font-size:11px;font-weight:500;letter-spacing:.08em;padding:6px 14px;border-radius:30px;border:1px solid var(--border);background:var(--paper);color:var(--ink3);cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--champ)'" onmouseout="this.style.borderColor='var(--border)'">
+    <svg id="filterChevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition:transform .25s;"><polyline points="6 9 12 15 18 9"/></svg>
+    Filters
+  </button>
+</div>
+<div id="filterRows" style="display:none;">
   <div class="filter-row" id="filterRowInfo"></div>
   <div class="filter-row" id="filterRowRelationship"></div>
   <div class="filter-row" id="filterRowType"></div>
@@ -1998,6 +2004,18 @@ document.getElementById('importFileInput').addEventListener('change', (e)=>{
 
 loadData();
 
+
+
+function toggleFilters(){
+  const rows = document.getElementById('filterRows');
+  const chevron = document.getElementById('filterChevron');
+  const btn = document.getElementById('filterToggle');
+  const isOpen = rows.style.display !== 'none';
+  rows.style.display = isOpen ? 'none' : 'block';
+  chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+  btn.style.color = isOpen ? 'var(--ink3)' : 'var(--champ)';
+  btn.style.borderColor = isOpen ? 'var(--border)' : 'var(--champ)';
+}
 
 // ── GROUPED VIEW ───────────────────────────────────────
 let viewMode = 'all';
