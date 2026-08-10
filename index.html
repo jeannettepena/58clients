@@ -477,13 +477,13 @@ function computeUpcoming(windowDays){
       if(md){
         const next = nextOccurrence(md.month, md.day, today);
         const days = daysBetween(next, today);
-        if(days <= windowDays) items.push({icon:'🏠', label:'Anniversary', name:r.owner1_name||'Home anniversary', sub:r.address, date:next, days, record:r});
+        if(days <= windowDays) items.push({icon:'', label:'Anniversary', name:r.owner1_name||'Home anniversary', sub:r.address, date:next, days, record:r});
       }
     } else {
       const end = parseDate(r.lease_end_date);
       if(end){
         const days = daysBetween(end, today);
-        if(days <= windowDays) items.push({icon:'📋', label: days<0 ? 'Lease expired' : 'Lease expires', name:r.owner1_name||r.address, sub:r.address, date:end, days, record:r});
+        if(days <= windowDays) items.push({icon:'', label: days<0 ? 'Lease expired' : 'Lease expires', name:r.owner1_name||r.address, sub:r.address, date:end, days, record:r});
       }
     }
     [['owner1_name','owner1_birthday'],['owner2_name','owner2_birthday']].forEach(([nameKey,bdayKey])=>{
@@ -491,7 +491,7 @@ function computeUpcoming(windowDays){
       if(md && r[nameKey]){
         const next = nextOccurrence(md.month, md.day, today);
         const days = daysBetween(next, today);
-        if(days <= windowDays) items.push({icon:'🎂', label:'Birthday', name:r[nameKey], sub:r.address, date:next, days, record:r});
+        if(days <= windowDays) items.push({icon:'', label:'Birthday', name:r[nameKey], sub:r.address, date:next, days, record:r});
       }
     });
     const followDays = (()=>{
@@ -500,7 +500,7 @@ function computeUpcoming(windowDays){
       return daysBetween(d, today);
     })();
     if(followDays !== null && followDays <= windowDays && computeFollowUpStatus(r) !== 'Completed' && computeFollowUpStatus(r) !== 'No Follow-Up Needed'){
-      items.push({icon:'📞', label: followDays<0 ? 'Follow-up overdue' : 'Follow-up due', name:r.owner1_name||r.address, sub:r.address, date:parseDate(r.next_follow_up_date), days:followDays, record:r});
+      items.push({icon:'', label: followDays<0 ? 'Follow-up overdue' : 'Follow-up due', name:r.owner1_name||r.address, sub:r.address, date:parseDate(r.next_follow_up_date), days:followDays, record:r});
     }
   });
   items.sort((a,b)=>{
@@ -839,7 +839,7 @@ function dateBadgeHtml(r){
   if(!rental){
     const d = parseDate(r.sold_date);
     if(!d) return '';
-    return `<div class="datebadge">🏠 Home anniversary: ${fmtMonthDay(d)}</div>`;
+    return `<div class="datebadge"> Home anniversary: ${fmtMonthDay(d)}</div>`;
   }
   const start = parseDate(r.sold_date);
   const end = parseDate(r.lease_end_date);
@@ -857,7 +857,7 @@ function dateBadgeHtml(r){
       parts.push('<span class="lease-missing">Add lease end date</span>');
     }
   }
-  return `<div class="datebadge${end && daysBetween(end, todayDate()) <= 60 ? ' lease-warn' : ''}">📋 ${parts.join(' · ')}</div>`;
+  return `<div class="datebadge${end && daysBetween(end, todayDate()) <= 60 ? ' lease-warn' : ''}"> ${parts.join(' · ')}</div>`;
 }
 
 function followUpRowHtml(r){
