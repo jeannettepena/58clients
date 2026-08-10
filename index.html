@@ -2136,7 +2136,7 @@ function renderGrouped(list){
     const dotClass = latest?.transaction_type?.toLowerCase().includes('rent') ? 'lease' : 'sold';
     const propCount = g.properties.length;
     return `<div class="client-group" id="cg-${encodeURIComponent(g.key)}">
-      <div class="client-group-head" onclick="toggleGroup('${encodeURIComponent(g.key)}')">
+      <div class="client-group-head" onclick="openClientDrawer('${encodeURIComponent(g.key)}')">
         <div>
           <div class="cg-name">${escapeHtml(g.name)}</div>
           <div class="cg-meta">${g.email ? escapeHtml(g.email) + ' · ' : ''}${g.phone ? escapeHtml(g.phone) : ''}</div>
@@ -2287,6 +2287,128 @@ function wireAddDrawerSave(prefill){
   });
 }
 
+
+// ── CLIENT PROFILE DRAWER ─────────────────────────────
+function openClientDrawer(groupKey){
+  const group = groupClients(filteredRecords ? filteredRecords() : records).find(g => g.key === decodeURIComponent(groupKey));
+  if(!group) return;
+
+  document.getElementById('clientDrawerBadge').textContent = group.properties.length + ' ' + (group.properties.length === 1 ? 'property' : 'properties');
+  document.getElementById('clientDrawerName').textContent = group.name;
+  document.getElementById('clientDrawerSub').textContent = [group.email, group.phone].filter(Boolean).join(' · ') || 'No contact info';
+  document.getElementById('clientDrawerBody').innerHTML = buildClientProfile(group);
+  document.getElementById('clientDrawer').classList.add('open');
+  document.getElementById('clientOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeClientDrawer(){
+  document.getElementById('clientDrawer').classList.remove('open');
+  document.getElementById('clientOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function buildClientProfile(group){
+  const today = todayDate();
+  const rows = group.properties.map(p => {
+    const isLease = p.transaction_type?.toLowerCase().includes('rent') || isRentalRole(p.role);
+    const closeDate = p.sold_date ? parseDate(p.sold_date) : null;
+    const leaseEnd = p.lease_end_date ? parseDate(p.lease_end_date) : null;
+
+    // Anniversary
+    let anniversaryHtml = '';
+    if(closeDate && !isLease){
+      const annivThisYear = new Date(today.getFullYear(), closeDate.getMonth(), closeDate.getDate());
+      const annivNext = annivThisYear < today ? new Date(today.getFullYear()+1, closeDate.getMonth(), closeDate.getDate()) : annivThisYear;
+      const days = Math.round((annivNext - today) / 86400000);
+      const label = days === 0 ? 'Today!' : days <= 30 ? `in ${days} days` : annivNext.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+      const urgent = days <= 30;
+      anniversaryHtml = `<div style="font-size:10px;margin-top:3px;color:${urgent?'var(--champ)':'var(--ink4)'};">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:3px;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        Anniversary ${label}${urgent?' ·':''} ${today.getFullYear() - closeDate.getFullYear()} yr${today.getFullYear() - closeDate.getFullYear() !== 1 ? 's' : ''}
+      </div>`;
+    }
+
+    // Lease status
+    let leaseHtml = '';
+    if(isLease && leaseEnd){
+      const days = Math.round((leaseEnd - today) / 86400000);
+      const expired = days < 0;
+      const urgent = days >= 0 && days <= 60;
+      const label = expired ? `Expired ${Math.abs(days)} days ago` : days === 0 ? 'Expires today!' : `Expires in ${days} days`;
+      leaseHtml = `<div style="font-size:10px;margin-top:3px;color:${expired?'#C24A3B':urgent?'var(--champ)':'var(--ink4)'};">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:3px;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        ${label}
+      </div>`;
+    }
+
+    const dotColor = isLease ? 'var(--champ-2)' : 'var(--teal)';
+    const typeLabel = isLease ? 'Lease' : 'Sale';
+    const dateStr = isLease 
+      ? (p.sold_date ? `Started ${p.sold_date}` : '') 
+      : (p.sold_date ? `Closed ${p.sold_date}` : '');
+
+    return `<div style="padding:12px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;align-items:flex-start;gap:10px;">
+        <div style="width:6px;height:6px;border-radius:50%;background:${dotColor};flex-shrink:0;margin-top:6px;"></div>
+        <div style="flex:1;">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--navy);">${escapeHtml(p.address||'—')}</div>
+          <div style="font-size:11px;color:var(--ink3);margin-top:1px;">${escapeHtml(p.city||'')}${p.city&&dateStr?' · ':''}${escapeHtml(dateStr)} · <span style="color:var(--ink4)">${typeLabel}</span>${p.sale_price?' · '+escapeHtml(p.sale_price):''}</div>
+          ${anniversaryHtml}
+          ${leaseHtml}
+        </div>
+        <button onclick="closeClientDrawer();setTimeout(()=>openEditDrawer('${escapeHtml(p.mls_number)}'),300)" 
+          style="font-size:10px;padding:3px 10px;border-radius:20px;border:none;background:var(--navy);color:var(--champ);cursor:pointer;font-family:'Jost',sans-serif;font-weight:500;flex-shrink:0;">Edit</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Upcoming alerts
+  const alerts = [];
+  group.properties.forEach(p => {
+    const isLease = p.transaction_type?.toLowerCase().includes('rent') || isRentalRole(p.role);
+    if(!isLease && p.sold_date){
+      const d = parseDate(p.sold_date);
+      if(d){
+        const anniv = new Date(today.getFullYear(), d.getMonth(), d.getDate());
+        if(anniv < today) anniv.setFullYear(today.getFullYear()+1);
+        const days = Math.round((anniv - today)/86400000);
+        if(days <= 60) alerts.push(`Anniversary for ${escapeHtml(p.address||'—')} in ${days} days`);
+      }
+    }
+    if(isLease && p.lease_end_date){
+      const d = parseDate(p.lease_end_date);
+      if(d){
+        const days = Math.round((d - today)/86400000);
+        if(days <= 90) alerts.push(`${days < 0 ? 'Expired' : 'Lease expires'} ${escapeHtml(p.address||'—')} ${days < 0 ? Math.abs(days)+' days ago' : 'in '+days+' days'}`);
+      }
+    }
+  });
+
+  const alertsHtml = alerts.length ? `
+    <div class="drawer-section" style="background:var(--champ-wash);border-radius:8px;padding:12px 16px;margin-bottom:4px;">
+      <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--navy);font-weight:500;margin-bottom:8px;font-family:'Jost',sans-serif;">Upcoming</div>
+      ${alerts.map(a=>`<div style="font-size:12px;color:var(--navy);padding:3px 0;font-family:'Jost',sans-serif;">· ${a}</div>`).join('')}
+    </div>` : '';
+
+  // Follow-up
+  const followUp = group.properties.find(p => p.next_follow_up_date);
+  const followHtml = followUp ? `
+    <div style="margin-bottom:16px;padding:10px 14px;background:var(--cream);border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:'Jost',sans-serif;color:var(--ink3);">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:5px;color:var(--champ);"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.15 12 19.79 19.79 0 0 1 1.08 3.4 2 2 0 0 1 3.05 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 21 16z"/></svg>
+      Next follow-up: <strong style="color:var(--navy);">${escapeHtml(followUp.next_follow_up_date)}</strong>
+    </div>` : '';
+
+  return `
+    <div style="padding:0 0 20px;">
+      ${alertsHtml}
+      ${followHtml}
+      <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);font-weight:500;margin-bottom:4px;font-family:'Jost',sans-serif;">Property History</div>
+      ${rows}
+    </div>
+  `;
+}
+
 // ── EDIT DRAWER ────────────────────────────────────────
 function openEditDrawer(mls){
   const r = records.find(x => x.mls_number === mls);
@@ -2419,5 +2541,20 @@ async function saveDrawer(mls){
   </div>
   <div class="drawer-body" id="drawerBody"></div>
 </div>
+
+<!-- CLIENT PROFILE DRAWER -->
+<div class="overlay" id="clientOverlay" onclick="closeClientDrawer()"></div>
+<div class="edit-drawer" id="clientDrawer">
+  <div class="drawer-head">
+    <div>
+      <div class="sheet-badge" id="clientDrawerBadge">Client Profile</div>
+      <div class="sheet-name" id="clientDrawerName">—</div>
+      <div class="sheet-sub" id="clientDrawerSub">—</div>
+    </div>
+    <button onclick="closeClientDrawer()" style="background:none;border:none;cursor:pointer;color:rgba(244,241,236,.5);font-size:22px;line-height:1;padding:0;" onmouseover="this.style.color='#C9A87C'" onmouseout="this.style.color='rgba(244,241,236,.5)'">&times;</button>
+  </div>
+  <div class="drawer-body" id="clientDrawerBody"></div>
+</div>
+
 </body>
 </html>
