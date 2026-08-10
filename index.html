@@ -159,6 +159,24 @@
   .btn-del{font-family:'Jost',sans-serif;font-size:12px;padding:9px 18px;border-radius:30px;border:1px solid var(--border);background:transparent;color:var(--ink3);cursor:pointer;transition:all .2s;}
   .btn-del:hover{border-color:#C24A3B;color:#C24A3B;}
 
+
+  /* EDIT DRAWER */
+  .edit-drawer{position:fixed;right:0;top:0;bottom:0;width:min(600px,100vw);background:var(--paper);z-index:400;overflow-y:auto;transform:translateX(100%);transition:transform .35s cubic-bezier(.2,.7,.25,1);box-shadow:-20px 0 60px rgba(27,43,58,.2);}
+  .edit-drawer.open{transform:translateX(0);}
+  .overlay{position:fixed;inset:0;background:rgba(27,43,58,.45);backdrop-filter:blur(3px);z-index:399;opacity:0;pointer-events:none;transition:opacity .3s;}
+  .overlay.open{opacity:1;pointer-events:all;}
+  .drawer-head{background:var(--navy);padding:24px 24px 20px;display:flex;align-items:flex-start;justify-content:space-between;}
+  .drawer-body{padding:24px;}
+  .drawer-section{margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid var(--border);}
+  .drawer-section:last-child{border-bottom:none;}
+  .drawer-section-title{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);font-weight:500;margin-bottom:14px;font-family:'Jost',sans-serif;}
+  .drawer-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .drawer-field{display:flex;flex-direction:column;gap:4px;}
+  .drawer-field label{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);font-weight:500;font-family:'Jost',sans-serif;}
+  .drawer-field input,.drawer-field select,.drawer-field textarea{font-family:'Jost',sans-serif;font-size:13px;font-weight:300;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--ink);outline:none;transition:border-color .2s;width:100%;}
+  .drawer-field input:focus,.drawer-field select:focus,.drawer-field textarea:focus{border-color:var(--champ);}
+  .drawer-actions{display:flex;gap:10px;padding:20px 24px;border-top:1px solid var(--border);background:var(--paper);position:sticky;bottom:0;}
+
   /* STATUS COLORS */
   .status-active{background:#E8F5E9;color:#2E7D32;}
   .status-prospect{background:var(--champ-wash);color:#8B6914;}
@@ -988,7 +1006,7 @@ function render(){
           </div>
           <div style="display:flex;gap:6px;align-items:center;">
             <button class="log-toggle-btn" style="font-size:10px;padding:3px 10px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--ink3);cursor:pointer;font-family:'Jost',sans-serif;transition:all .2s;" data-log-toggle="${escapeHtml(r.mls_number)}" onmouseover="this.style.borderColor='var(--champ)'" onmouseout="this.style.borderColor='var(--border)'">${logExpanded ? 'Hide' : 'Log'} (${(activityLogs[r.mls_number]||[]).length})</button>
-            <button class="edit-btn" style="font-size:10px;padding:3px 12px;border-radius:20px;border:none;background:var(--navy);color:var(--champ);cursor:pointer;font-family:'Jost',sans-serif;font-weight:500;" data-edit="${escapeHtml(r.mls_number)}">Edit</button>
+            <button class="edit-btn" style="font-size:10px;padding:3px 12px;border-radius:20px;border:none;background:var(--navy);color:var(--champ);cursor:pointer;font-family:'Jost',sans-serif;font-weight:500;" onclick="openEditDrawer('${escapeHtml(r.mls_number)}')" style="font-size:10px;padding:3px 12px;border-radius:20px;border:none;background:var(--navy);color:var(--champ);cursor:pointer;font-family:'Jost',sans-serif;font-weight:500;">Edit</button>
           </div>
         </div>
         ${logExpanded ? `<div class="activity-log" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">${activityLogHtml(r.mls_number)}</div>` : ''}
@@ -1921,5 +1939,19 @@ document.getElementById('importFileInput').addEventListener('change', (e)=>{
 loadData();
 </script>
 
+
+<!-- EDIT DRAWER -->
+<div class="overlay" id="editOverlay" onclick="closeEditDrawer()"></div>
+<div class="edit-drawer" id="editDrawer">
+  <div class="drawer-head">
+    <div>
+      <div class="sheet-badge" id="drawerBadge">Edit Record</div>
+      <div class="sheet-name" id="drawerName">—</div>
+      <div class="sheet-sub" id="drawerSub">—</div>
+    </div>
+    <button onclick="closeEditDrawer()" style="background:none;border:none;cursor:pointer;color:rgba(244,241,236,.5);font-size:22px;line-height:1;padding:0;transition:color .2s;" onmouseover="this.style.color='#C9A87C'" onmouseout="this.style.color='rgba(244,241,236,.5)'">&times;</button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+</div>
 </body>
 </html>
