@@ -1,0 +1,1932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Properties &amp; Clients — The 58 Group</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  :root{
+    --navy:#1F2A44;
+    --navy-light:#2E3E63;
+    --gold:#B8963E;
+    --gold-light:#EFE3C2;
+    --cream:#FAF8F4;
+    --paper:#FFFFFF;
+    --ink:#1F1F1F;
+    --muted:#6B7280;
+    --line:#E7E2D6;
+    --green-bg:#E7F3EA; --green-tx:#1B6E3A;
+    --amber-bg:#FBF1DA; --amber-tx:#8A6413;
+    --grey-bg:#EEEFF1; --grey-tx:#555555;
+    --red-bg:#F7ECEC; --red-tx:#9C3B3B;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; font-family:"Georgia","Iowan Old Style",serif; background:var(--cream); color:var(--ink); }
+  .ui{ font-family:Arial, Helvetica, sans-serif; }
+
+  header{ background:linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%); color:#fff; padding:34px 6vw 30px; position:relative; text-align:center; }
+  header .logo-mark{ display:block; margin:0 auto 22px; height:52px; }
+  header h1{ margin:0 0 6px; font-size:32px; font-weight:400; letter-spacing:.01em; }
+  header h1 em{ font-style:italic; color:var(--gold-light); }
+  header .subline{ font-family:Arial, sans-serif; letter-spacing:.14em; text-transform:uppercase; font-size:10.5px; color:#B9C2D6; margin-top:2px; }
+  #syncStatus{ font-family:Arial, sans-serif; font-size:11.5px; color:#B9C2D6; position:absolute; top:34px; right:6vw; }
+  #syncStatus.err{ color:#F3B9B9; }
+
+  .view-tabs-wrap{ background:var(--paper); border-bottom:1px solid var(--line); }
+  .view-tabs{ display:flex; gap:30px; padding:0 6vw; max-width:1180px; margin:0 auto; }
+  .view-tab{ font-family:Arial, sans-serif; font-size:13px; font-weight:600; letter-spacing:.01em; padding:16px 2px 13px; border:none; border-bottom:2px solid transparent; background:transparent; color:var(--muted); cursor:pointer; }
+  .view-tab.active{ color:var(--navy); border-bottom-color:var(--gold); font-weight:700; }
+
+  .upcoming-panel{ margin:24px 6vw 0; background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:18px 20px; }
+  .upcoming-head{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:12px; }
+  .upcoming-title{ font-family:Arial, sans-serif; font-size:14px; font-weight:700; color:var(--navy); letter-spacing:.02em; }
+  .upcoming-title .upcoming-count{ font-family:Arial, sans-serif; font-size:11px; font-weight:700; background:var(--gold-light); color:#6B5423; padding:2px 8px; border-radius:10px; margin-left:8px; vertical-align:middle; }
+  .upcoming-window-label{ font-family:Arial, sans-serif; font-size:12px; color:var(--muted); }
+  .upcoming-window-label select{ font-family:Arial, sans-serif; font-size:12px; border:1px solid var(--line); border-radius:6px; padding:5px 7px; color:var(--ink); background:#fff; margin-left:4px; }
+  .upcoming-empty{ font-family:Arial, sans-serif; font-size:12.5px; color:var(--muted); font-style:italic; padding:6px 0 2px; }
+  .upcoming-list{ display:flex; flex-direction:column; gap:6px; }
+  .upcoming-row{
+    display:flex; align-items:center; gap:10px; font-family:Arial, sans-serif; font-size:12.5px; color:var(--ink);
+    background:var(--cream); border:1px solid var(--line); border-radius:8px; padding:9px 12px; cursor:pointer; transition:border-color .12s ease;
+  }
+  .upcoming-row:hover{ border-color:var(--gold); }
+  .upcoming-row .up-icon{ font-size:15px; flex:0 0 auto; }
+  .upcoming-row .up-label{ flex:0 0 auto; font-weight:700; color:var(--navy); white-space:nowrap; }
+  .upcoming-row .up-name{ flex:1 1 auto; font-weight:600; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .upcoming-row .up-sub{ flex:1 1 auto; color:var(--muted); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .upcoming-row .up-date{ flex:0 0 auto; color:var(--muted); white-space:nowrap; }
+  .upcoming-row .up-days{ flex:0 0 auto; font-weight:700; font-size:11px; padding:4px 9px; border-radius:12px; white-space:nowrap; background:var(--grey-bg); color:var(--grey-tx); }
+  .upcoming-row .up-days.soon{ background:var(--amber-bg); color:var(--amber-tx); }
+  .upcoming-row .up-days.urgent{ background:var(--red-bg); color:var(--red-tx); }
+  .upcoming-toggle{ font-family:Arial, sans-serif; font-size:12px; font-weight:600; color:var(--navy); background:none; border:none; cursor:pointer; padding:8px 0 0; text-decoration:underline; }
+  @media (max-width:820px){
+    .upcoming-row{ flex-wrap:wrap; }
+    .upcoming-row .up-sub{ order:5; flex-basis:100%; }
+  }
+
+  .stats{ display:flex; flex-wrap:wrap; gap:14px; padding:24px 6vw 0; }
+  .stat-card{ font-family:Arial, sans-serif; background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:15px 18px; min-width:120px; flex:1 1 130px; box-shadow:0 1px 2px rgba(31,42,68,0.04); }
+  .stat-card .num{ font-size:24px; font-weight:700; color:var(--navy); line-height:1; }
+  .stat-card .lbl{ margin-top:6px; font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+  .stat-card.tone-green .num{ color:var(--green-tx); }
+  .stat-card.tone-amber .num{ color:var(--amber-tx); }
+  .stat-card.tone-grey .num{ color:var(--grey-tx); }
+  .stat-card.tone-red .num{ color:var(--red-tx); }
+
+  .quickviews{ font-family:Arial, sans-serif; margin:16px 6vw 0; display:flex; gap:8px; flex-wrap:wrap; }
+  .qv-btn{ font-size:12px; font-weight:700; padding:8px 14px; border-radius:20px; border:1px dashed var(--gold); background:#fff; color:#6B5423; cursor:pointer; white-space:nowrap; }
+  .qv-btn:hover{ background:var(--gold-light); }
+  .qv-btn.active{ background:var(--gold); border-style:solid; color:#fff; }
+
+  .controls{ font-family:Arial, sans-serif; margin:18px 6vw 0; display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+  .controls-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+  .btn-pill{ font-family:Arial, sans-serif; font-size:12.5px; font-weight:700; padding:10px 16px; border-radius:8px; cursor:pointer; white-space:nowrap; border:1px solid var(--line); background:#fff; color:var(--navy); }
+  .btn-pill:hover{ border-color:var(--navy); }
+  .btn-pill.primary{ background:var(--navy); border-color:var(--navy); color:#fff; }
+  .btn-pill.primary:hover{ background:var(--navy-light); }
+  #importFileInput{ display:none; }
+  .search-wrap{ position:relative; flex:1 1 280px; }
+  #search{
+    width:100%; padding:11px 14px 11px 38px; border:1px solid var(--line); border-radius:8px; font-size:14px; font-family:Arial, sans-serif;
+    background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%236B7280' stroke-width='2'><circle cx='6.5' cy='6.5' r='5.5'/><line x1='10.5' y1='10.5' x2='15' y2='15'/></svg>") no-repeat 12px center;
+    color:var(--ink);
+  }
+  #search:focus{ outline:none; border-color:var(--gold); }
+
+  .filter-row{ display:flex; gap:8px; flex-wrap:wrap; margin:14px 6vw 0; font-family:Arial, sans-serif; align-items:center; }
+  .filter-row .grp-label{ font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin-right:2px; }
+  .filter-btn{
+    font-family:Arial, sans-serif; font-size:12.5px; font-weight:600; padding:8px 13px; border-radius:20px; border:1px solid var(--line);
+    background:#fff; color:var(--muted); cursor:pointer; transition:all .12s ease; white-space:nowrap;
+  }
+  .filter-btn:hover{ border-color:var(--navy); color:var(--navy); }
+  .filter-btn.active{ background:var(--navy); border-color:var(--navy); color:#fff; }
+
+  .result-count{ font-family:Arial, sans-serif; margin:16px 6vw 6px; font-size:12.5px; color:var(--muted); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
+  .sort-select{ font-family:Arial, sans-serif; font-size:12.5px; border:1px solid var(--line); border-radius:6px; padding:6px 8px; color:var(--ink); background:#fff; }
+
+  .list{ margin:0 6vw 60px; display:flex; flex-direction:column; gap:10px; }
+  .card{ background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:16px 20px; }
+  .card.jasso{ border-left:4px solid var(--gold); }
+  .card-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:14px; flex-wrap:wrap; margin-bottom:10px; }
+  .col-prop .addr{ font-size:15.5px; color:var(--navy); font-weight:600; }
+  .col-prop .meta{ font-family:Arial, sans-serif; font-size:12px; color:var(--muted); margin-top:3px; }
+  .col-prop .datebadge{ font-family:Arial, sans-serif; font-size:11.5px; color:#8A6413; margin-top:4px; }
+  .col-prop .datebadge.lease-warn{ color:var(--red-tx); font-weight:700; }
+  .col-prop .datebadge.lease-missing{ color:var(--muted); font-style:italic; }
+  .card-top-right{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; justify-content:flex-end; max-width:60%; }
+
+  .role-pill{ display:inline-block; font-family:Arial, sans-serif; font-size:11px; font-weight:700; padding:4px 10px; border-radius:14px; background:var(--gold-light); color:#6B5423; white-space:nowrap; }
+  .type-pills{ display:flex; gap:4px; flex-wrap:wrap; }
+
+  .owners{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .owner-block{ background:var(--cream); border:1px solid var(--line); border-radius:8px; padding:10px 13px; }
+  .owner-block.empty{ display:flex; align-items:center; justify-content:center; color:var(--muted); font-style:italic; font-size:12.5px; font-family:Arial, sans-serif; }
+  .owner-block .o-label{ font-family:Arial, sans-serif; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin-bottom:4px; }
+  .owner-block .o-name{ font-family:Arial, sans-serif; font-size:14px; font-weight:700; color:var(--ink); }
+  .owner-block .o-line{ font-family:Arial, sans-serif; font-size:12.5px; color:var(--ink); margin-top:3px; }
+  .owner-block .o-line a{ color:var(--navy); text-decoration:none; }
+  .owner-block .o-line a:hover{ text-decoration:underline; }
+  .owner-block .o-bday{ font-family:Arial, sans-serif; font-size:12px; color:#8A6413; margin-top:3px; }
+  .owner-block .o-bday::before{ content:"🎂 "; }
+
+  .note-row{ font-family:Arial, sans-serif; font-size:11.5px; color:var(--muted); margin-top:10px; line-height:1.4; }
+  .note-row.repeat{ color:#8A6413; font-weight:700; }
+
+  .followup-row{ font-family:Arial, sans-serif; font-size:11.5px; color:var(--muted); margin-top:10px; display:flex; gap:14px; flex-wrap:wrap; align-items:center; }
+  .followup-pill{ font-weight:700; padding:3px 9px; border-radius:12px; font-size:10.5px; text-transform:uppercase; letter-spacing:.03em; }
+
+  .badge{ font-family:Arial, sans-serif; display:inline-block; font-size:11px; font-weight:700; letter-spacing:.03em; text-transform:uppercase; padding:5px 11px; border-radius:20px; white-space:nowrap; }
+  .badge.tone-green{ background:var(--green-bg); color:var(--green-tx); }
+  .badge.tone-amber{ background:var(--amber-bg); color:var(--amber-tx); }
+  .badge.tone-grey{ background:var(--grey-bg); color:var(--grey-tx); }
+  .badge.tone-red{ background:var(--red-bg); color:var(--red-tx); }
+  .badge.tone-navy{ background:var(--navy); color:#fff; }
+  .badge.tone-gold{ background:var(--gold); color:#fff; }
+  .badge.tone-gold2{ background:var(--gold-light); color:#6B5423; }
+  .badge.tone-grey-dark{ background:#E3E1DA; color:#7A7568; }
+
+  .edit-btn{ font-family:Arial, sans-serif; font-size:12px; font-weight:600; color:var(--navy); background:#fff; border:1px solid var(--line); padding:7px 12px; border-radius:6px; cursor:pointer; white-space:nowrap; }
+  .edit-btn:hover{ border-color:var(--navy); }
+  .log-toggle-btn{ font-family:Arial, sans-serif; font-size:11.5px; font-weight:600; color:var(--muted); background:none; border:none; text-decoration:underline; cursor:pointer; padding:0; margin-top:8px; }
+
+  .activity-log{ margin-top:12px; border-top:1px dashed var(--line); padding-top:12px; font-family:Arial, sans-serif; }
+  .activity-entry{ font-size:12px; padding:8px 10px; background:var(--cream); border-radius:6px; margin-bottom:6px; }
+  .activity-entry .ae-head{ display:flex; justify-content:space-between; gap:8px; font-weight:700; color:var(--navy); }
+  .activity-entry .ae-body{ color:var(--ink); margin-top:2px; }
+  .activity-entry .ae-diff{ color:var(--muted); font-style:italic; margin-top:2px; }
+  .activity-empty{ font-size:12px; color:var(--muted); font-style:italic; }
+  .log-add-row{ display:grid; grid-template-columns:1fr 2fr 1fr auto; gap:8px; margin-top:10px; align-items:end; }
+  .log-add-row label{ display:block; font-size:10.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px; }
+  .log-add-row input, .log-add-row select, .log-add-row textarea{ width:100%; padding:7px 9px; border:1px solid var(--line); border-radius:6px; font-size:12.5px; font-family:Arial, sans-serif; }
+  @media (max-width:900px){ .log-add-row{ grid-template-columns:1fr; } }
+
+  .card.editing{ background:#FCFAF5; border-color:var(--gold); }
+  .edit-form{ font-family:Arial, sans-serif; }
+  .edit-form .addr-label{ font-size:14px; font-weight:700; color:var(--navy); margin-bottom:14px; }
+  .edit-section{ background:#fff; border:1px solid var(--line); border-radius:8px; padding:12px 14px; margin-bottom:14px; }
+  .edit-section .es-title{ font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin-bottom:10px; }
+  .owner-edit-grid{ display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:14px; }
+  .owner-edit{ background:#fff; border:1px solid var(--line); border-radius:8px; padding:12px 14px; }
+  .owner-edit .oe-title{ font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin-bottom:10px; }
+  .edit-form label{ display:block; font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px; margin-top:8px; }
+  .edit-form label:first-of-type{ margin-top:0; }
+  .edit-form input, .edit-form select, .edit-form textarea{
+    width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:6px; font-size:13px; font-family:Arial, sans-serif; color:var(--ink); background:#fff;
+  }
+  .edit-form input:disabled, .edit-form select:disabled{ background:var(--grey-bg); color:var(--muted); }
+  .edit-form textarea{ resize:vertical; min-height:40px; }
+  .checkbox-grid{ display:flex; flex-wrap:wrap; gap:10px; margin-top:6px; }
+  .checkbox-pill{ font-family:Arial, sans-serif; font-size:12px; display:flex; align-items:center; gap:5px; background:var(--cream); border:1px solid var(--line); border-radius:16px; padding:5px 11px; cursor:pointer; }
+  .checkbox-pill input{ width:auto; margin:0; }
+  .override-row{ display:flex; align-items:center; gap:8px; font-size:11.5px; color:var(--muted); margin-top:6px; }
+  .override-row input{ width:auto; }
+  .auto-hint{ font-size:11px; font-style:italic; color:var(--muted); margin-top:4px; }
+  .lease-edit-row{ background:#FFF9EC; border:1px solid #E1CE93; border-radius:8px; padding:12px 14px; margin-bottom:14px; }
+  .lease-edit-row .oe-title{ font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:#8A6413; margin-bottom:10px; }
+  .lease-est-hint{ font-family:Arial, sans-serif; font-size:10.5px; font-style:italic; color:var(--muted); margin-top:4px; line-height:1.4; }
+  .lease-edit-grid, .edit-grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .edit-grid-3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
+  .bottom-row{ display:grid; grid-template-columns:1fr 2fr; gap:14px; margin-bottom:14px; }
+  .edit-actions{ display:flex; gap:10px; justify-content:flex-end; align-items:center; }
+  .save-confirm{ font-size:12px; color:var(--green-tx); font-weight:700; opacity:0; transition:opacity .2s ease; }
+  .save-confirm.show{ opacity:1; }
+  .btn-save{ font-family:Arial, sans-serif; font-size:13px; font-weight:700; background:var(--navy); color:#fff; border:none; padding:9px 18px; border-radius:6px; cursor:pointer; }
+  .btn-save:hover{ background:var(--navy-light); }
+  .btn-cancel{ font-family:Arial, sans-serif; font-size:13px; font-weight:600; background:#fff; color:var(--muted); border:1px solid var(--line); padding:9px 18px; border-radius:6px; cursor:pointer; }
+  .validation-note{ font-family:Arial, sans-serif; font-size:12px; background:var(--amber-bg); color:var(--amber-tx); border-radius:6px; padding:8px 12px; margin-bottom:12px; }
+
+  .empty-state{ font-family:Arial, sans-serif; text-align:center; padding:50px 20px; color:var(--muted); }
+  .loading{ font-family:Arial, sans-serif; text-align:center; padding:60px 20px; color:var(--muted); }
+  footer{ font-family:Arial, sans-serif; text-align:center; padding:24px; font-size:11.5px; color:var(--muted); border-top:1px solid var(--line); }
+
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--navy); color:#fff;
+    font-family:Arial, sans-serif; font-size:13px; font-weight:600; padding:12px 20px; border-radius:8px; opacity:0; pointer-events:none;
+    transition:all .25s ease; z-index:100;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast.err{ background:var(--red-tx); }
+
+  .modal-backdrop{ position:fixed; inset:0; background:rgba(31,42,68,0.45); display:flex; align-items:center; justify-content:center; z-index:200; }
+  .modal-box{ font-family:Arial, sans-serif; background:#fff; border-radius:10px; padding:24px; max-width:420px; width:90%; box-shadow:0 10px 40px rgba(0,0,0,0.25); }
+  .modal-box h3{ margin:0 0 10px; color:var(--navy); font-size:16px; }
+  .modal-box p{ margin:0 0 18px; color:var(--ink); font-size:13.5px; line-height:1.5; }
+  .modal-actions{ display:flex; gap:10px; justify-content:flex-end; }
+
+  .thelist-filters{ display:flex; gap:8px; flex-wrap:wrap; margin:26px 6vw 16px; font-family:Arial, sans-serif; align-items:center; }
+  .thelist-count{ margin:0 6vw 10px; font-family:Arial, sans-serif; font-size:12px; color:var(--muted); }
+  .thelist-table{ margin:0 6vw 60px; border-collapse:collapse; width:calc(100% - 12vw); font-family:Arial, sans-serif; font-size:12.5px; background:#fff; }
+  .thelist-table th{ background:var(--navy); color:#fff; text-align:left; padding:10px 10px; font-size:11px; text-transform:uppercase; letter-spacing:.04em; }
+  .thelist-table td{ padding:9px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  .thelist-table tr:hover td{ background:#FCFAF5; }
+  .thelist-table select{ font-family:Arial, sans-serif; font-size:11.5px; padding:5px 6px; border:1px solid var(--line); border-radius:5px; }
+  .thelist-link{ font-family:Arial, sans-serif; font-size:11.5px; font-weight:700; color:var(--navy); background:none; border:none; text-decoration:underline; cursor:pointer; padding:0; }
+  .thelist-actions{ display:flex; align-items:center; gap:6px; white-space:nowrap; }
+  .thelist-actions .quick-log-btn{ padding:5px 10px; font-size:11px; }
+  .thelist-action-btn{ font-family:Arial, sans-serif; font-size:11px; font-weight:700; color:var(--navy); background:var(--gold-light); border:1px solid var(--gold); border-radius:5px; padding:5px 8px; cursor:pointer; white-space:nowrap; }
+  .thelist-action-btn:hover{ background:var(--gold); color:#fff; }
+
+  .log-contact-form{ background:var(--cream); border:1px solid var(--gold); border-radius:8px; padding:16px 18px; font-family:Arial, sans-serif; }
+  .lcf-title{ font-weight:700; color:var(--navy); font-size:13px; margin-bottom:10px; }
+  .lcf-grid{ display:grid; grid-template-columns:repeat(3, minmax(160px,1fr)); gap:12px; margin-bottom:10px; }
+  .lcf-grid label, .lcf-notes-label{ display:flex; flex-direction:column; gap:4px; font-size:11.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; }
+  .lcf-grid select, .lcf-grid input, .lcf-notes-label textarea{ font-family:Arial, sans-serif; font-size:12.5px; font-weight:400; text-transform:none; letter-spacing:normal; color:var(--ink); padding:7px 8px; border:1px solid var(--line); border-radius:5px; }
+  .lcf-notes-label{ margin-bottom:12px; }
+  .lcf-notes-label textarea{ resize:vertical; }
+  .lcf-actions{ display:flex; gap:10px; justify-content:flex-end; }
+
+  @media (max-width:820px){
+    .lcf-grid{ grid-template-columns:1fr; }
+    .owners{ grid-template-columns:1fr; }
+    .owner-edit-grid, .lease-edit-grid, .edit-grid-2, .edit-grid-3{ grid-template-columns:1fr; }
+    .bottom-row{ grid-template-columns:1fr; }
+    #syncStatus{ position:static; display:block; margin-top:14px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <img class="logo-mark" alt="The 58 Group" src="data:image/png;base64,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">
+  <h1>Properties &amp; <em>Clients</em></h1>
+  <div class="subline ui">Production &amp; Relationship System</div>
+  <div id="syncStatus" class="ui">Connecting…</div>
+</header>
+<nav class="view-tabs-wrap">
+  <div class="view-tabs ui" id="viewTabs"></div>
+</nav>
+
+<div class="upcoming-panel ui" id="upcoming"></div>
+
+<div class="stats ui" id="stats"></div>
+
+<div class="quickviews ui" id="quickviews"></div>
+
+<div class="controls" id="controlsBar">
+  <div class="search-wrap">
+    <input type="text" id="search" placeholder="Search by name, address, city, MLS#, or email…">
+  </div>
+  <div class="controls-actions" id="controlsActions">
+    <button class="btn-pill primary ui" id="addNewBtn">+ Add Client / Property</button>
+    <button class="btn-pill ui" id="exportCsvBtn">Export CSV</button>
+    <button class="btn-pill ui" id="importCsvBtn">Import CSV</button>
+    <input type="file" id="importFileInput" accept=".csv">
+  </div>
+</div>
+
+<div id="filterRows">
+  <div class="filter-row" id="filterRowInfo"></div>
+  <div class="filter-row" id="filterRowRelationship"></div>
+  <div class="filter-row" id="filterRowType"></div>
+  <div class="filter-row" id="filterRowPropStatus"></div>
+</div>
+
+<div class="result-count ui" id="resultCountWrap">
+  <span id="resultCount"></span>
+  <span id="sortWrap"></span>
+</div>
+
+<div class="list" id="list"><div class="loading">Loading your clients…</div></div>
+
+<div id="theListWrap"></div>
+
+<div id="referralsWrap"></div>
+
+<footer>Compiled from MLS production history and Gmail correspondence · The 58 Group · edits sync live to everyone viewing this page</footer>
+
+<div class="toast ui" id="toast"></div>
+<div id="modalRoot"></div>
+
+<script>
+const SUPABASE_URL = 'https://kiqxkbwnfqlkeaexqihl.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpcXhrYnduZnFsa2VhZXhxaWhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNjYwOTEsImV4cCI6MjA5NTg0MjA5MX0.1n8CV8zzRbk_HMeUvwx3mjyzZNPiBcGvBRvaGZgnECE';
+const TABLE = 'jp58_production_transactions';
+const LOG_TABLE = 'jp58_activity_log';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ---------------------------------------------------------------------------
+// Constants — the CRM v2 field vocabulary
+// ---------------------------------------------------------------------------
+const INFO_STATUSES = ['Not Reviewed','Incomplete','Complete','Unable to Locate'];
+const RELATIONSHIP_STATUSES = ['Active Client','Past Client','Prospect','Warm Lead','Sphere','Referral Partner','Investor','Family / Personal','Do Not Contact','Archived'];
+const CLIENT_TYPES = ['Buyer','Seller','Landlord','Tenant','Investor','Commercial','Referral','Other'];
+const PROPERTY_STATUSES = ['Purchased','Sold','Leased','Currently Owned','Listed','Under Contract','Property Management','Unknown','No Longer Owned'];
+const ANNUAL_REVIEW_STATUSES = ['Not Started','Research Needed','Comps Ready','Draft Ready','Approved','Printed','Mailed','Called','Follow-Up','Completed','Not Applicable'];
+const ASSIGNED_AGENTS = ['Jeannette','Alma','Rebecca','Other'];
+const THE_LIST_STATUSES = ['Ready to Contact','Research Needed','Review Prepared','Review Mailed','Called','Texted','In Touch','Follow-Up Needed','Completed This Cycle','Do Not Contact'];
+const ACTIVITY_TYPES = ['Record Created','Information Updated','Status Changed','Phone Call','Text Message','In Touch','Email','Letter Mailed','Annual Home Review','CMA Sent','Comparable Sales Sent','Meeting','Referral Received','Referral Sent','Birthday Added','Transaction Added','Transaction Closed','Property Ownership Updated','Follow-Up Scheduled','Follow-Up Completed','Note Added','Do Not Contact','Other'];
+const CONTACT_ACTIVITY_TYPES = ['Phone Call','Text Message','In Touch','Email','Letter Mailed','Meeting'];
+
+const TONE = {
+  'Not Reviewed':'tone-grey', 'Incomplete':'tone-amber', 'Complete':'tone-green', 'Unable to Locate':'tone-red',
+  'Active Client':'tone-gold', 'Past Client':'tone-navy', 'Prospect':'tone-amber', 'Warm Lead':'tone-gold2', 'Sphere':'tone-grey',
+  'Referral Partner':'tone-grey', 'Investor':'tone-gold2', 'Family / Personal':'tone-grey', 'Do Not Contact':'tone-red', 'Archived':'tone-grey-dark',
+  'Purchased':'tone-green', 'Sold':'tone-green', 'Leased':'tone-gold2', 'Currently Owned':'tone-navy',
+  'Listed':'tone-amber', 'Under Contract':'tone-amber', 'Property Management':'tone-grey', 'Unknown':'tone-grey', 'No Longer Owned':'tone-grey-dark',
+  'Not Scheduled':'tone-grey', 'Scheduled':'tone-navy', 'Due Today':'tone-amber', 'Overdue':'tone-red', 'Completed':'tone-green', 'No Follow-Up Needed':'tone-grey-dark',
+  'Contacted':'tone-green', 'Left a Message':'tone-amber', 'No Answer':'tone-red'
+};
+function toneOf(v){ return TONE[v] || 'tone-grey'; }
+
+const ROLES = ['Buyer','Seller','Landlord','Tenant','Seller & Buyer','Landlord & Tenant'];
+const isRentalRole = role => role === 'Landlord' || role === 'Tenant' || role === 'Landlord & Tenant';
+
+// Result options for logging the outcome of a referral/lead conversation — each
+// suggests (but does not force) a next-contact date, editable before saving.
+const REFERRAL_RESULTS = [
+  {key:'interested', label:'Interested — Schedule Follow-Up', days:7},
+  {key:'not-ready', label:'Not Ready Yet', days:90},
+  {key:'not-interested', label:'Not Interested', days:null},
+  {key:'became-client', label:'Became Active Client', days:null},
+  {key:'no-answer', label:'No Answer — Try Again', days:3},
+];
+
+let records = [];
+let activityLogs = {}; // mls_number -> array of log entries, most recent first
+let currentView = 'clients'; // 'clients' | 'thelist' | 'referrals'
+let filterInfo = 'all', filterRelationship = 'all', filterType = 'all', filterPropStatus = 'all';
+let filterTheListStatus = 'all';
+let filterReferralFollowUp = 'all'; // filters the Referrals & Leads tab by Follow-Up Status
+let logContactMls = null;   // mls_number currently showing the inline Log Call / Log Result form, or null
+let logContactMode = null;  // 'call' | 'result'
+let newLeadPrefill = null;  // optional {relationship_status, referred_by} to prefill the Add Lead form
+let activeQuickView = null;
+let sortMode = 'recent';
+let searchTerm = '';
+let editingMls = null;
+let addingNew = false;
+let expandedLogMls = null;
+let infoOverrideChecked = false;
+
+function escapeHtml(s){
+  return (s==null?'':String(s)).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function parseDate(mmddyyyy){
+  if(!mmddyyyy) return null;
+  const parts = String(mmddyyyy).split('/').map(Number);
+  if(parts.length !== 3 || parts.some(isNaN)) return null;
+  const [m,d,y] = parts;
+  const dt = new Date(y, m-1, d);
+  return isNaN(dt.getTime()) ? null : dt;
+}
+function fmtMonthDay(dt){ return dt.toLocaleString('en-US', {month:'long', day:'numeric'}); }
+function fmtFull(dt){ return dt.toLocaleString('en-US', {month:'long', day:'numeric', year:'numeric'}); }
+function fmtDateSlash(dt){
+  const mm = String(dt.getMonth()+1).padStart(2,'0');
+  const dd = String(dt.getDate()).padStart(2,'0');
+  return `${mm}/${dd}/${dt.getFullYear()}`;
+}
+function todayDate(){ const d = new Date(); d.setHours(0,0,0,0); return d; }
+function addDaysToToday(days){
+  const d = todayDate();
+  d.setDate(d.getDate() + days);
+  return fmtDateSlash(d);
+}
+// Conversions between our stored MM/DD/YYYY text format and the native
+// <input type="date"> ISO format, so date fields can use a real calendar
+// picker while everything already saved stays in the same format.
+function mmddyyyyToIso(s){
+  const d = parseDate(s);
+  if(!d) return '';
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function isoToMmddyyyy(s){
+  if(!s) return '';
+  const parts = String(s).split('-');
+  if(parts.length !== 3) return '';
+  const [y,m,d] = parts;
+  if(!y || !m || !d) return '';
+  return `${m}/${d}/${y}`;
+}
+function suggestLeaseEnd(startStr, months){
+  const start = parseDate(startStr);
+  if(!start) return null;
+  const y = start.getFullYear(), m = start.getMonth();
+  return new Date(y, m + months + 1, 0);
+}
+function sortKeyMonthDay(mmddyyyy){
+  const d = parseDate(mmddyyyy);
+  return d ? [d.getMonth(), d.getDate()] : [99,99];
+}
+function isRepeat(note){ return /REPEAT CLIENT|JASSO FAMILY/i.test(note || ''); }
+function daysBetween(a,b){ return Math.round((a-b)/86400000); }
+function typeArr(r){ return Array.isArray(r.client_type) ? r.client_type : []; }
+
+// ---------------------------------------------------------------------------
+// Info Status auto-computation (Not Reviewed / Incomplete / Complete / Unable to Locate)
+// ---------------------------------------------------------------------------
+function hasHouseholdContact(r){
+  return !!(r.owner1_email || r.owner1_phone || r.owner2_email || r.owner2_phone);
+}
+function computeAutoInfoStatus(r){
+  const hasName = !!(r.owner1_name && r.owner1_name.trim());
+  const hasContact = hasHouseholdContact(r);
+  const hasType = typeArr(r).length > 0;
+  const hasRelationship = !!(r.relationship_status && r.relationship_status.trim());
+  if(hasName && hasContact && hasType && hasRelationship) return 'Complete';
+  if(hasName || hasContact) return 'Incomplete';
+  return 'Not Reviewed';
+}
+function missingFieldsList(r){
+  const missing = [];
+  if(!(r.owner1_name && r.owner1_name.trim())) missing.push('Client name');
+  if(!hasHouseholdContact(r)) missing.push('Phone or email');
+  if(!(typeArr(r).length)) missing.push('Client type');
+  if(!(r.relationship_status && r.relationship_status.trim())) missing.push('Relationship status');
+  return missing;
+}
+
+// ---------------------------------------------------------------------------
+// Follow-up status (computed live from Next Follow-Up Date, with a manual override
+// for Completed / No Follow-Up Needed since those can't be derived from a date alone)
+// ---------------------------------------------------------------------------
+const FOLLOWUP_OVERRIDE_OPTIONS = ['Contacted','Left a Message','No Answer','Completed','No Follow-Up Needed'];
+function computeFollowUpStatus(r){
+  if(r.follow_up_status_override) return r.follow_up_status_override;
+  const d = parseDate(r.next_follow_up_date);
+  if(!d) return 'Not Scheduled';
+  const days = daysBetween(d, todayDate());
+  if(days < 0) return 'Overdue';
+  if(days === 0) return 'Due Today';
+  return 'Scheduled';
+}
+
+// ---------------------------------------------------------------------------
+// The List eligibility — past clients, investors, sphere contacts, referral partners
+// ---------------------------------------------------------------------------
+function isTheListEligible(r){
+  return ['Past Client','Sphere','Referral Partner'].includes(r.relationship_status) || typeArr(r).includes('Investor');
+}
+
+// ---------------------------------------------------------------------------
+// Referrals & Leads eligibility — prospects and referral-sourced contacts who
+// have not yet become clients. Same underlying records as the other two tabs;
+// nothing here is stored separately.
+// ---------------------------------------------------------------------------
+function isReferralLeadEligible(r){
+  return ['Prospect','Warm Lead'].includes(r.relationship_status) || typeArr(r).includes('Referral');
+}
+
+// ---------------------------------------------------------------------------
+// Upcoming (birthdays, home anniversaries, lease expirations) — unchanged logic
+// ---------------------------------------------------------------------------
+let upcomingWindow = 60;
+let upcomingExpanded = false;
+
+function parseMonthDay(str){
+  if(!str) return null;
+  const parts = String(str).trim().split('/').map(Number);
+  if(parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) return null;
+  const [m,d] = parts;
+  if(m<1||m>12||d<1||d>31) return null;
+  return {month:m, day:d};
+}
+function nextOccurrence(month, day, today){
+  const y = today.getFullYear();
+  let dt = new Date(y, month-1, day);
+  if(dt < today) dt = new Date(y+1, month-1, day);
+  return dt;
+}
+function computeUpcoming(windowDays){
+  const today = todayDate();
+  const items = [];
+  records.forEach(r=>{
+    const rental = isRentalRole(r.role);
+    if(!rental){
+      const md = parseMonthDay(r.sold_date);
+      if(md){
+        const next = nextOccurrence(md.month, md.day, today);
+        const days = daysBetween(next, today);
+        if(days <= windowDays) items.push({icon:'🏠', label:'Anniversary', name:r.owner1_name||'Home anniversary', sub:r.address, date:next, days, record:r});
+      }
+    } else {
+      const end = parseDate(r.lease_end_date);
+      if(end){
+        const days = daysBetween(end, today);
+        if(days <= windowDays) items.push({icon:'📋', label: days<0 ? 'Lease expired' : 'Lease expires', name:r.owner1_name||r.address, sub:r.address, date:end, days, record:r});
+      }
+    }
+    [['owner1_name','owner1_birthday'],['owner2_name','owner2_birthday']].forEach(([nameKey,bdayKey])=>{
+      const md = parseMonthDay(r[bdayKey]);
+      if(md && r[nameKey]){
+        const next = nextOccurrence(md.month, md.day, today);
+        const days = daysBetween(next, today);
+        if(days <= windowDays) items.push({icon:'🎂', label:'Birthday', name:r[nameKey], sub:r.address, date:next, days, record:r});
+      }
+    });
+    const followDays = (()=>{
+      const d = parseDate(r.next_follow_up_date);
+      if(!d) return null;
+      return daysBetween(d, today);
+    })();
+    if(followDays !== null && followDays <= windowDays && computeFollowUpStatus(r) !== 'Completed' && computeFollowUpStatus(r) !== 'No Follow-Up Needed'){
+      items.push({icon:'📞', label: followDays<0 ? 'Follow-up overdue' : 'Follow-up due', name:r.owner1_name||r.address, sub:r.address, date:parseDate(r.next_follow_up_date), days:followDays, record:r});
+    }
+  });
+  items.sort((a,b)=>{
+    const aOver = a.days<0, bOver = b.days<0;
+    if(aOver && !bOver) return -1;
+    if(!aOver && bOver) return 1;
+    if(aOver && bOver) return b.days - a.days;
+    return a.days - b.days;
+  });
+  return items;
+}
+function upcomingWindowSelectHtml(){
+  return `<label class="upcoming-window-label">Next
+    <select id="upcomingWindowSel">
+      <option value="30" ${upcomingWindow===30?'selected':''}>30 days</option>
+      <option value="60" ${upcomingWindow===60?'selected':''}>60 days</option>
+      <option value="90" ${upcomingWindow===90?'selected':''}>90 days</option>
+    </select></label>`;
+}
+function renderUpcoming(){
+  const wrap = document.getElementById('upcoming');
+  if(!wrap) return;
+  const items = computeUpcoming(upcomingWindow);
+  if(items.length === 0){
+    wrap.innerHTML = `
+      <div class="upcoming-head">
+        <div class="upcoming-title">Coming Up</div>
+        ${upcomingWindowSelectHtml()}
+      </div>
+      <div class="upcoming-empty">Nothing due in the next ${upcomingWindow} days.</div>
+    `;
+    wireUpcomingEvents();
+    return;
+  }
+  const collapsed = !upcomingExpanded && items.length > 6;
+  const shown = collapsed ? items.slice(0,6) : items;
+  wrap.innerHTML = `
+    <div class="upcoming-head">
+      <div class="upcoming-title">Coming Up<span class="upcoming-count">${items.length}</span></div>
+      ${upcomingWindowSelectHtml()}
+    </div>
+    <div class="upcoming-list">
+      ${shown.map(it=>{
+        const urgency = it.days<0 ? 'urgent' : it.days<=7 ? 'urgent' : it.days<=30 ? 'soon' : '';
+        const dayLabel = it.days<0 ? `${Math.abs(it.days)}d overdue` : it.days===0 ? 'Today' : it.days===1 ? 'Tomorrow' : `in ${it.days}d`;
+        return `
+        <div class="upcoming-row" data-mls="${escapeHtml(it.record.mls_number)}">
+          <span class="up-icon">${it.icon}</span>
+          <span class="up-label">${it.label}</span>
+          <span class="up-name">${escapeHtml(it.name)}</span>
+          <span class="up-sub">${escapeHtml(it.sub||'')}</span>
+          <span class="up-date">${fmtMonthDay(it.date)}</span>
+          <span class="up-days ${urgency}">${dayLabel}</span>
+        </div>`;
+      }).join('')}
+    </div>
+    ${items.length > 6 ? `<button class="upcoming-toggle" id="upcomingToggle">${collapsed ? `Show ${items.length-6} more` : 'Show less'}</button>` : ''}
+  `;
+  wireUpcomingEvents();
+}
+function wireUpcomingEvents(){
+  const sel = document.getElementById('upcomingWindowSel');
+  if(sel) sel.addEventListener('change', e=>{ upcomingWindow = Number(e.target.value); upcomingExpanded = false; renderUpcoming(); });
+  const toggle = document.getElementById('upcomingToggle');
+  if(toggle) toggle.addEventListener('click', ()=>{ upcomingExpanded = !upcomingExpanded; renderUpcoming(); });
+  document.querySelectorAll('.upcoming-row').forEach(row=>{
+    row.addEventListener('click', ()=>{
+      const mls = row.dataset.mls;
+      openRecordForEdit(mls);
+    });
+  });
+}
+function openRecordForEdit(mls){
+  currentView = 'clients';
+  searchTerm = '';
+  activeQuickView = null;
+  filterInfo='all'; filterRelationship='all'; filterType='all'; filterPropStatus='all';
+  renderViewTabs();
+  renderFilters();
+  renderQuickViews();
+  const searchEl = document.getElementById('search');
+  if(searchEl) searchEl.value = '';
+  editingMls = mls;
+  addingNew = false;
+  renderMainView();
+  requestAnimationFrame(()=>{
+    const card = document.querySelector('.card.editing');
+    if(card) card.scrollIntoView({behavior:'smooth', block:'center'});
+  });
+}
+
+// Opens the "Add Client / Property" form on the All Clients & Properties tab,
+// optionally prefilled (e.g. from a referral surfaced during a logged call).
+// The new record is created as its own independent row — it is never merged
+// into an existing client — so it shows up on its own in whichever tab its
+// Relationship Status / Client Type make it eligible for.
+function openAddLead(prefill){
+  newLeadPrefill = prefill || null;
+  currentView = 'clients';
+  searchTerm = '';
+  activeQuickView = null;
+  filterInfo='all'; filterRelationship='all'; filterType='all'; filterPropStatus='all';
+  renderViewTabs();
+  renderFilters();
+  renderQuickViews();
+  const searchEl = document.getElementById('search');
+  if(searchEl) searchEl.value = '';
+  editingMls = null;
+  addingNew = true;
+  renderMainView();
+  requestAnimationFrame(()=>{
+    const card = document.querySelector('.card[data-mls="__new__"]');
+    if(card) card.scrollIntoView({behavior:'smooth', block:'center'});
+  });
+}
+
+function setSyncStatus(text, isErr){
+  const el = document.getElementById('syncStatus');
+  el.textContent = text;
+  el.classList.toggle('err', !!isErr);
+}
+function showToast(msg, isErr){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.toggle('err', !!isErr);
+  t.classList.add('show');
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(()=> t.classList.remove('show'), 2800);
+}
+function showConfirmModal(title, message, confirmLabel, onConfirm){
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal-box">
+        <h3>${escapeHtml(title)}</h3>
+        <p>${escapeHtml(message)}</p>
+        <div class="modal-actions">
+          <button class="btn-cancel ui" id="modalCancel">Not Yet</button>
+          <button class="btn-save ui" id="modalConfirm">${escapeHtml(confirmLabel)}</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById('modalCancel').addEventListener('click', ()=>{ root.innerHTML=''; onConfirm(false); });
+  document.getElementById('modalConfirm').addEventListener('click', ()=>{ root.innerHTML=''; onConfirm(true); });
+}
+
+// ---------------------------------------------------------------------------
+// Activity Log
+// ---------------------------------------------------------------------------
+async function loadActivityLogs(){
+  const { data, error } = await sb.from(LOG_TABLE).select('*').order('created_at', {ascending:false});
+  if(error) return;
+  activityLogs = {};
+  data.forEach(entry=>{
+    if(!activityLogs[entry.mls_number]) activityLogs[entry.mls_number] = [];
+    activityLogs[entry.mls_number].push(entry);
+  });
+}
+async function addActivityLogEntry(mls, entry){
+  const payload = {
+    mls_number: mls,
+    entry_date: entry.entry_date || fmtDateSlash(new Date()),
+    entry_time: entry.entry_time || '',
+    user_name: entry.user_name || 'Jeannette',
+    activity_type: entry.activity_type || 'Other',
+    description: entry.description || '',
+    related_property: entry.related_property || '',
+    previous_value: entry.previous_value || '',
+    new_value: entry.new_value || '',
+    follow_up_date: entry.follow_up_date || ''
+  };
+  const { data, error } = await sb.from(LOG_TABLE).insert(payload).select();
+  if(!error && data && data[0]){
+    if(!activityLogs[mls]) activityLogs[mls] = [];
+    activityLogs[mls].unshift(data[0]);
+  }
+  return !error;
+}
+function activityLogHtml(mls){
+  const entries = activityLogs[mls] || [];
+  if(!entries.length) return '<div class="activity-empty">No activity logged yet.</div>';
+  return entries.map(e=>{
+    const diff = (e.previous_value || e.new_value) ? `<div class="ae-diff">${escapeHtml(e.previous_value ? `Was: ${e.previous_value} → ` : '')}${escapeHtml(e.new_value ? `Now: ${e.new_value}` : '')}</div>` : '';
+    return `
+      <div class="activity-entry">
+        <div class="ae-head"><span>${escapeHtml(e.activity_type)}</span><span>${escapeHtml(e.entry_date)}${e.entry_time ? ' · '+escapeHtml(e.entry_time) : ''} — ${escapeHtml(e.user_name)}</span></div>
+        <div class="ae-body">${escapeHtml(e.description)}${e.related_property ? ` (${escapeHtml(e.related_property)})` : ''}</div>
+        ${diff}
+        ${e.follow_up_date ? `<div class="ae-diff">Follow-up scheduled: ${escapeHtml(e.follow_up_date)}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+// ---------------------------------------------------------------------------
+// Load
+// ---------------------------------------------------------------------------
+async function loadData(){
+  setSyncStatus('Syncing…');
+  const { data, error } = await sb.from(TABLE).select('*');
+  if(error){
+    setSyncStatus('Offline — could not load', true);
+    document.getElementById('list').innerHTML = '<div class="empty-state">Could not connect to load live data. Check your connection and refresh the page.</div>';
+    return;
+  }
+  records = data.sort((a,b)=> (parseDate(b.sold_date)||new Date(0)) - (parseDate(a.sold_date)||new Date(0)));
+  await loadActivityLogs();
+  setSyncStatus('Live — edits save automatically');
+  renderViewTabs();
+  renderFilters();
+  renderQuickViews();
+  updateStats();
+  renderUpcoming();
+  renderMainView();
+}
+
+// ---------------------------------------------------------------------------
+// View tabs (All Clients vs The List)
+// ---------------------------------------------------------------------------
+function renderViewTabs(){
+  const wrap = document.getElementById('viewTabs');
+  wrap.innerHTML = `
+    <div class="view-tab ${currentView==='clients'?'active':''}" data-view="clients">All Clients &amp; Properties</div>
+    <div class="view-tab ${currentView==='thelist'?'active':''}" data-view="thelist">The List</div>
+    <div class="view-tab ${currentView==='referrals'?'active':''}" data-view="referrals">Referrals &amp; Leads</div>
+  `;
+  wrap.querySelectorAll('.view-tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{
+      currentView = tab.dataset.view;
+      logContactMls = null;
+      logContactMode = null;
+      renderViewTabs();
+      renderMainView();
+    });
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Quick Views
+// ---------------------------------------------------------------------------
+const QUICK_VIEWS = [
+  {key:'needs-info', label:'Needs Information', test: r => r.client_info_status==='Not Reviewed' || r.client_info_status==='Incomplete'},
+  {key:'complete', label:'Complete Records', test: r => r.client_info_status==='Complete'},
+  {key:'active-clients', label:'Active Clients', test: r => r.relationship_status==='Active Client'},
+  {key:'past-clients', label:'Past Clients', test: r => r.relationship_status==='Past Client'},
+  {key:'followup-due', label:'Follow-Up Due', test: r => ['Due Today','Overdue'].includes(computeFollowUpStatus(r))},
+  {key:'do-not-contact', label:'Do Not Contact', test: r => r.relationship_status==='Do Not Contact'},
+  {key:'recently-updated', label:'Recently Updated', test: r => { const d = r.updated_at ? new Date(r.updated_at) : null; return d && daysBetween(todayDate(), new Date(d.getFullYear(),d.getMonth(),d.getDate())) <= 7; }},
+];
+function renderQuickViews(){
+  const wrap = document.getElementById('quickviews');
+  wrap.innerHTML = QUICK_VIEWS.map(qv=>
+    `<button class="qv-btn ${activeQuickView===qv.key?'active':''}" data-qv="${qv.key}">${qv.label}</button>`
+  ).join('');
+  wrap.querySelectorAll('.qv-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      activeQuickView = activeQuickView === btn.dataset.qv ? null : btn.dataset.qv;
+      renderQuickViews();
+      renderMainView();
+    });
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Filters
+// ---------------------------------------------------------------------------
+function filterRowHtml(id, label, values, current, grp){
+  return `<span class="grp-label ui">${label}</span>` +
+    ['all', ...values].map(v=>
+      `<button class="filter-btn ${current===v?'active':''}" data-grp="${grp}" data-val="${v}">${v==='all'?'All':v}</button>`
+    ).join('');
+}
+function renderFilters(){
+  document.getElementById('filterRowInfo').innerHTML = filterRowHtml('filterRowInfo','Info Status', INFO_STATUSES, filterInfo, 'info');
+  document.getElementById('filterRowRelationship').innerHTML = filterRowHtml('filterRowRelationship','Relationship', RELATIONSHIP_STATUSES, filterRelationship, 'relationship');
+  document.getElementById('filterRowType').innerHTML = filterRowHtml('filterRowType','Client Type', CLIENT_TYPES, filterType, 'type');
+  document.getElementById('filterRowPropStatus').innerHTML = filterRowHtml('filterRowPropStatus','Property Status', PROPERTY_STATUSES, filterPropStatus, 'propstatus');
+
+  const sortWrap = document.getElementById('sortWrap');
+  sortWrap.innerHTML = `<label class="ui" style="font-size:12.5px;color:var(--muted);">Sort by
+    <select class="sort-select" id="sortSel">
+      <option value="recent" ${sortMode==='recent'?'selected':''}>Most Recent Transaction</option>
+      <option value="anniv" ${sortMode==='anniv'?'selected':''}>Anniversary / Lease Date (Jan → Dec)</option>
+      <option value="followup" ${sortMode==='followup'?'selected':''}>Follow-Up Date (Soonest First)</option>
+    </select></label>`;
+  document.getElementById('sortSel').addEventListener('change', (e)=>{ sortMode = e.target.value; renderMainView(); });
+
+  document.querySelectorAll('#filterRows .filter-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const grp = btn.dataset.grp, val = btn.dataset.val;
+      activeQuickView = null;
+      if(grp==='info') filterInfo = val;
+      else if(grp==='relationship') filterRelationship = val;
+      else if(grp==='type') filterType = val;
+      else filterPropStatus = val;
+      renderQuickViews();
+      renderFilters();
+      renderMainView();
+    });
+  });
+}
+
+function updateStats(){
+  const el = document.getElementById('stats');
+  const c = {'Not Reviewed':0,'Incomplete':0,'Complete':0,'Unable to Locate':0};
+  records.forEach(r=> c[r.client_info_status] = (c[r.client_info_status]||0)+1 );
+  el.innerHTML = `
+    <div class="stat-card"><div class="num">${records.length}</div><div class="lbl">Total Clients</div></div>
+    <div class="stat-card tone-green"><div class="num">${c['Complete']}</div><div class="lbl">Complete</div></div>
+    <div class="stat-card tone-amber"><div class="num">${c['Incomplete']}</div><div class="lbl">Incomplete</div></div>
+    <div class="stat-card tone-grey"><div class="num">${c['Not Reviewed']}</div><div class="lbl">Not Reviewed</div></div>
+    <div class="stat-card tone-red"><div class="num">${c['Unable to Locate']}</div><div class="lbl">Unable to Locate</div></div>
+  `;
+}
+
+function ownerBlockHtml(name, email, phone, bday, label){
+  if(!name && !email && !phone && !bday){
+    return `<div class="owner-block empty">No ${label} on file</div>`;
+  }
+  const lines = [];
+  if(email) lines.push(`<div class="o-line"><a href="mailto:${email}">${escapeHtml(email)}</a></div>`);
+  if(phone) lines.push(`<div class="o-line"><a href="tel:${phone.replace(/[^0-9+]/g,'')}">${escapeHtml(phone)}</a></div>`);
+  if(bday) lines.push(`<div class="o-bday">${escapeHtml(bday)}</div>`);
+  return `
+    <div class="owner-block">
+      <div class="o-label">${label}</div>
+      <div class="o-name">${name ? escapeHtml(name) : '<span style="color:var(--muted);font-weight:400;font-style:italic;">Name unknown</span>'}</div>
+      ${lines.join('')}
+    </div>
+  `;
+}
+
+function dateBadgeHtml(r){
+  const rental = isRentalRole(r.role);
+  if(!rental){
+    const d = parseDate(r.sold_date);
+    if(!d) return '';
+    return `<div class="datebadge">🏠 Home anniversary: ${fmtMonthDay(d)}</div>`;
+  }
+  const start = parseDate(r.sold_date);
+  const end = parseDate(r.lease_end_date);
+  const parts = [];
+  if(start) parts.push(`Lease started ${fmtFull(start)}`);
+  if(end){
+    const daysLeft = daysBetween(end, todayDate());
+    const warn = daysLeft <= 60;
+    parts.push(`<span class="${warn?'lease-warn':''}">Lease expires ${fmtFull(end)}${warn && daysLeft>=0 ? ` (${daysLeft}d)` : ''}</span>`);
+  } else {
+    const estimate = suggestLeaseEnd(r.sold_date, 12);
+    if(estimate){
+      parts.push(`<span class="lease-missing">Est. lease expires ${fmtFull(estimate)} (12-mo. default — confirm in Edit)</span>`);
+    } else {
+      parts.push('<span class="lease-missing">Add lease end date</span>');
+    }
+  }
+  return `<div class="datebadge${end && daysBetween(end, todayDate()) <= 60 ? ' lease-warn' : ''}">📋 ${parts.join(' · ')}</div>`;
+}
+
+function followUpRowHtml(r){
+  const status = computeFollowUpStatus(r);
+  const parts = [];
+  if(r.last_contact_date) parts.push(`Last contact: ${escapeHtml(r.last_contact_date)}`);
+  if(r.next_follow_up_date) parts.push(`Next follow-up: ${escapeHtml(r.next_follow_up_date)}${r.assigned_agent ? ' ('+escapeHtml(r.assigned_agent)+')' : ''}`);
+  if(!parts.length && status==='Not Scheduled') return '';
+  return `<div class="followup-row"><span class="followup-pill badge ${toneOf(status)}">${escapeHtml(status)}</span>${parts.join(' &middot; ')}</div>`;
+}
+
+function badgesHtml(r){
+  const types = typeArr(r);
+  return `
+    <span class="badge ${toneOf(r.client_info_status)}">${escapeHtml(r.client_info_status)}</span>
+    <span class="badge ${toneOf(r.relationship_status)}">${escapeHtml(r.relationship_status||'—')}</span>
+    ${types.length ? `<span class="type-pills">${types.map(t=>`<span class="role-pill">${escapeHtml(t)}</span>`).join('')}</span>` : ''}
+    <span class="badge ${toneOf(r.property_status)}">${escapeHtml(r.property_status||'Unknown')}</span>
+  `;
+}
+
+// ---------------------------------------------------------------------------
+// Main list rendering (Clients view) vs The List (table view)
+// ---------------------------------------------------------------------------
+function matchesSearch(r, term){
+  if(!term) return true;
+  const hay = `${r.address} ${r.city} ${r.mls_number} ${r.owner1_name} ${r.owner2_name} ${r.owner1_email} ${r.owner2_email} ${r.client_note}`.toLowerCase();
+  return hay.includes(term);
+}
+function filteredRecords(){
+  const term = searchTerm.trim().toLowerCase();
+  let filtered = records.filter(r=>{
+    if(activeQuickView){
+      const qv = QUICK_VIEWS.find(q=>q.key===activeQuickView);
+      if(qv && !qv.test(r)) return false;
+    } else {
+      if(filterInfo !== 'all' && r.client_info_status !== filterInfo) return false;
+      if(filterRelationship !== 'all' && r.relationship_status !== filterRelationship) return false;
+      if(filterType !== 'all' && !typeArr(r).includes(filterType)) return false;
+      if(filterPropStatus !== 'all' && (r.property_status||'Unknown') !== filterPropStatus) return false;
+    }
+    if(!matchesSearch(r, term)) return false;
+    return true;
+  });
+
+  if(sortMode === 'anniv'){
+    filtered = filtered.slice().sort((a,b)=>{
+      const aKey = isRentalRole(a.role) ? sortKeyMonthDay(a.lease_end_date || a.sold_date) : sortKeyMonthDay(a.sold_date);
+      const bKey = isRentalRole(b.role) ? sortKeyMonthDay(b.lease_end_date || b.sold_date) : sortKeyMonthDay(b.sold_date);
+      return aKey[0]-bKey[0] || aKey[1]-bKey[1];
+    });
+  } else if(sortMode === 'followup'){
+    filtered = filtered.slice().sort((a,b)=>{
+      const da = parseDate(a.next_follow_up_date), db = parseDate(b.next_follow_up_date);
+      if(!da && !db) return 0;
+      if(!da) return 1;
+      if(!db) return -1;
+      return da - db;
+    });
+  } else {
+    filtered = filtered.slice().sort((a,b)=> (parseDate(b.sold_date)||new Date(0)) - (parseDate(a.sold_date)||new Date(0)));
+  }
+  return filtered;
+}
+
+function renderMainView(){
+  const isClients = currentView === 'clients';
+  const isTheList = currentView === 'thelist';
+  const isReferrals = currentView === 'referrals';
+  document.getElementById('upcoming').style.display = isClients ? '' : 'none';
+  document.getElementById('stats').style.display = isClients ? '' : 'none';
+  document.getElementById('quickviews').style.display = isClients ? '' : 'none';
+  document.getElementById('controlsActions').style.display = isClients ? '' : 'none';
+  document.getElementById('filterRows').style.display = isClients ? '' : 'none';
+  document.getElementById('resultCountWrap').style.display = isClients ? '' : 'none';
+  document.getElementById('list').style.display = isClients ? '' : 'none';
+  document.getElementById('theListWrap').style.display = isTheList ? '' : 'none';
+  document.getElementById('referralsWrap').style.display = isReferrals ? '' : 'none';
+  if(isClients) render();
+  else if(isTheList) renderTheList();
+  else renderReferrals();
+}
+
+function render(){
+  const list = document.getElementById('list');
+  const filtered = filteredRecords();
+
+  document.getElementById('resultCount').textContent = `Showing ${filtered.length} of ${records.length} clients`;
+
+  if(filtered.length === 0 && !addingNew){
+    list.innerHTML = '<div class="empty-state">No matches. Try a different search term or filter.</div>';
+    return;
+  }
+
+  const cardsHtml = filtered.map(r=>{
+    if(r.mls_number === editingMls) return renderEditCard(r);
+    const repeat = isRepeat(r.client_note);
+    const noteHtml = r.client_note ? `<div class="note-row ${repeat?'repeat':''}">${escapeHtml(r.client_note)}</div>` : '';
+    const logExpanded = expandedLogMls === r.mls_number;
+    return `
+      <div class="card ${repeat ? 'jasso':''}">
+        <div class="card-top">
+          <div class="col-prop">
+            <div class="addr">${escapeHtml(r.address)}</div>
+            <div class="meta">${escapeHtml(r.city||'')} &middot; ${escapeHtml(r.transaction_type||'')} closed ${escapeHtml(r.sold_date||'—')} &middot; MLS# ${escapeHtml(r.mls_number)}</div>
+            ${dateBadgeHtml(r)}
+          </div>
+          <div class="card-top-right">
+            ${badgesHtml(r)}
+            <button class="edit-btn ui" data-edit="${escapeHtml(r.mls_number)}">Edit</button>
+          </div>
+        </div>
+        <div class="owners">
+          ${ownerBlockHtml(r.owner1_name, r.owner1_email, r.owner1_phone, r.owner1_birthday, 'Client 1')}
+          ${ownerBlockHtml(r.owner2_name, r.owner2_email, r.owner2_phone, r.owner2_birthday, 'Client 2')}
+        </div>
+        ${noteHtml}
+        ${followUpRowHtml(r)}
+        <button class="log-toggle-btn" data-log-toggle="${escapeHtml(r.mls_number)}">${logExpanded ? 'Hide' : 'View'} Activity Log (${(activityLogs[r.mls_number]||[]).length})</button>
+        ${logExpanded ? `<div class="activity-log">${activityLogHtml(r.mls_number)}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+
+  list.innerHTML = (addingNew ? renderNewCard() : '') + cardsHtml;
+
+  list.querySelectorAll('[data-edit]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      editingMls = btn.dataset.edit;
+      addingNew = false;
+      infoOverrideChecked = false;
+      render();
+      const card = list.querySelector('.card.editing');
+      if(card) card.scrollIntoView({behavior:'smooth', block:'center'});
+    });
+  });
+  list.querySelectorAll('[data-log-toggle]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const mls = btn.dataset.logToggle;
+      expandedLogMls = expandedLogMls === mls ? null : mls;
+      render();
+    });
+  });
+  wireEditCardEvents();
+  wireNewCardEvents();
+}
+
+// ---------------------------------------------------------------------------
+// The List workflow view (table)
+// ---------------------------------------------------------------------------
+function renderTheList(){
+  const wrap = document.getElementById('theListWrap');
+  const term = searchTerm.trim().toLowerCase();
+  const eligibleAll = records.filter(isTheListEligible).filter(r=>matchesSearch(r, term));
+
+  const statusCounts = {};
+  THE_LIST_STATUSES.forEach(s=> statusCounts[s]=0 );
+  statusCounts['__blank__'] = 0;
+  eligibleAll.forEach(r=>{
+    const v = r.the_list_status;
+    if(v && THE_LIST_STATUSES.includes(v)) statusCounts[v]++;
+    else statusCounts['__blank__']++;
+  });
+
+  const eligible = eligibleAll.filter(r=>{
+    if(filterTheListStatus === 'all') return true;
+    if(filterTheListStatus === '__blank__') return !r.the_list_status;
+    return r.the_list_status === filterTheListStatus;
+  }).slice().sort((a,b)=>{
+    const da = parseDate(a.next_follow_up_date), db = parseDate(b.next_follow_up_date);
+    if(!da && !db) return 0;
+    if(!da) return 1;
+    if(!db) return -1;
+    return da - db;
+  });
+
+  const filterBtnsHtml = `
+    <div class="thelist-filters" id="thelistFilters">
+      <span class="grp-label ui">The List Status</span>
+      <button class="filter-btn ${filterTheListStatus==='all'?'active':''}" data-tlval="all">All (${eligibleAll.length})</button>
+      <button class="filter-btn ${filterTheListStatus==='__blank__'?'active':''}" data-tlval="__blank__">Not Set (${statusCounts['__blank__']})</button>
+      ${THE_LIST_STATUSES.map(s=>`<button class="filter-btn ${filterTheListStatus===s?'active':''}" data-tlval="${s}">${s} (${statusCounts[s]})</button>`).join('')}
+    </div>
+    <div class="thelist-count">Showing ${eligible.length} of ${eligibleAll.length} on The List</div>
+  `;
+
+  if(!eligibleAll.length){
+    wrap.innerHTML = `<div class="empty-state">${term ? 'No matches on The List for that search.' : 'No past clients, investors, sphere contacts, or referral partners yet.'}</div>`;
+    return;
+  }
+  if(!eligible.length){
+    wrap.innerHTML = filterBtnsHtml + '<div class="empty-state">No records match this The List status filter.</div>';
+    wireTheListFilterButtons(wrap);
+    return;
+  }
+
+  wrap.innerHTML = filterBtnsHtml + `
+    <table class="thelist-table">
+      <thead><tr>
+        <th>Client</th><th>Property</th><th>Txn Date</th><th>Type</th><th>Last Contact</th><th>Next Follow-Up</th>
+        <th>Info Status</th><th>Relationship</th><th>Annual Review</th><th>Notes</th><th>Assigned</th><th>The List Status</th><th></th>
+      </tr></thead>
+      <tbody>
+        ${eligible.map(r=>`
+          <tr data-mls="${escapeHtml(r.mls_number)}">
+            <td>${escapeHtml(r.owner1_name || 'Name unknown')}</td>
+            <td>${escapeHtml(r.address)}</td>
+            <td>${escapeHtml(r.sold_date||'—')}</td>
+            <td>${escapeHtml(r.transaction_type||'')}</td>
+            <td>${escapeHtml(r.last_contact_date||'—')}</td>
+            <td>${escapeHtml(r.next_follow_up_date||'—')}</td>
+            <td><span class="badge ${toneOf(r.client_info_status)}">${escapeHtml(r.client_info_status)}</span></td>
+            <td><span class="badge ${toneOf(r.relationship_status)}">${escapeHtml(r.relationship_status)}</span></td>
+            <td>${escapeHtml(r.annual_review_status||'Not Applicable')}</td>
+            <td style="max-width:180px;">${escapeHtml((r.client_note||'').slice(0,80))}</td>
+            <td>${escapeHtml(r.assigned_agent||'')}</td>
+            <td>
+              <select class="the-list-status-sel" data-mls="${escapeHtml(r.mls_number)}">
+                ${THE_LIST_STATUSES.map(s=>`<option value="${s}" ${r.the_list_status===s?'selected':''}>${s}</option>`).join('')}
+                <option value="" ${!r.the_list_status?'selected':''}>—</option>
+              </select>
+            </td>
+            <td>
+              <button class="thelist-action-btn" data-logcall="${escapeHtml(r.mls_number)}">Log Call</button>
+              <button class="thelist-link" data-open="${escapeHtml(r.mls_number)}" style="margin-left:8px;">Open</button>
+            </td>
+          </tr>
+          ${logContactMls===r.mls_number && logContactMode==='call' ? logContactFormHtml(r, 'call') : ''}
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+
+  wrap.querySelectorAll('.the-list-status-sel').forEach(sel=>{
+    sel.addEventListener('change', async ()=>{
+      const mls = sel.dataset.mls;
+      const val = sel.value;
+      const rec = records.find(r=>r.mls_number===mls);
+      const prev = rec ? rec.the_list_status : '';
+      const { error } = await sb.from(TABLE).update({the_list_status: val, updated_at: new Date().toISOString()}).eq('mls_number', mls);
+      if(error){ showToast('Could not update — please try again', true); return; }
+      if(rec) rec.the_list_status = val;
+      await addActivityLogEntry(mls, {activity_type:'Status Changed', description:'The List status updated.', related_property: rec ? rec.address : '', previous_value: prev, new_value: val});
+      showToast('Saved');
+      renderTheList();
+    });
+  });
+  wrap.querySelectorAll('[data-logcall]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      logContactMls = btn.dataset.logcall;
+      logContactMode = 'call';
+      renderTheList();
+    });
+  });
+  wrap.querySelectorAll('[data-open]').forEach(btn=>{
+    btn.addEventListener('click', ()=> openRecordForEdit(btn.dataset.open));
+  });
+  wireTheListFilterButtons(wrap);
+  wireLogContactForm(wrap, renderTheList);
+}
+
+function wireTheListFilterButtons(wrap){
+  wrap.querySelectorAll('#thelistFilters .filter-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      filterTheListStatus = btn.dataset.tlval;
+      renderTheList();
+    });
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Shared inline "Log Call" / "Log Result" form — used by both The List and
+// Referrals & Leads. Writes to the SAME record and the SAME Activity Log used
+// everywhere else in the dashboard, so nothing is ever duplicated: Last
+// Contact Date, Next Follow-Up Date, and one permanent log entry are all this
+// writes.
+// ---------------------------------------------------------------------------
+function logContactFormHtml(r, mode){
+  const isResult = mode === 'result';
+  return `
+    <tr class="log-contact-row">
+      <td colspan="20">
+        <div class="log-contact-form">
+          <div class="lcf-title">${isResult ? 'Log Result' : 'Log Call'} — ${escapeHtml(r.owner1_name || 'Name unknown')}</div>
+          <div class="lcf-grid">
+            <label>Contact Method
+              <select class="lcf-method">${CONTACT_ACTIVITY_TYPES.map(t=>`<option value="${t}">${t}</option>`).join('')}</select>
+            </label>
+            ${isResult ? `
+            <label>Result
+              <select class="lcf-result">
+                <option value="">— Select a result —</option>
+                ${REFERRAL_RESULTS.map(res=>`<option value="${res.key}">${res.label}</option>`).join('')}
+              </select>
+            </label>` : ''}
+            <label>Next Follow-Up
+              <input type="date" class="lcf-nextfollowup" value="${mmddyyyyToIso(r.next_follow_up_date)}">
+            </label>
+          </div>
+          <label class="lcf-notes-label">Notes
+            <textarea class="lcf-notes" rows="2" placeholder="What did you talk about?"></textarea>
+          </label>
+          <div class="lcf-actions">
+            <button class="thelist-action-btn lcf-new-lead" type="button">+ New Lead From This Call</button>
+            <span style="flex:1;"></span>
+            <button class="btn-pill ui lcf-cancel" type="button">Cancel</button>
+            <button class="btn-pill primary ui lcf-save" type="button">Save</button>
+          </div>
+        </div>
+      </td>
+    </tr>
+  `;
+}
+function wireLogContactForm(wrap, rerender){
+  const formRow = wrap.querySelector('.log-contact-row');
+  if(!formRow) return;
+  const mls = logContactMls;
+  const resultSel = formRow.querySelector('.lcf-result');
+  const nextInput = formRow.querySelector('.lcf-nextfollowup');
+  if(resultSel){
+    resultSel.addEventListener('change', ()=>{
+      const res = REFERRAL_RESULTS.find(x=>x.key===resultSel.value);
+      if(res && res.days != null) nextInput.value = mmddyyyyToIso(addDaysToToday(res.days));
+    });
+  }
+  formRow.querySelector('.lcf-cancel').addEventListener('click', ()=>{
+    logContactMls = null; logContactMode = null;
+    rerender();
+  });
+
+  async function saveLogContact(){
+    const rec = records.find(r=>r.mls_number===mls);
+    if(!rec) return null;
+    const method = formRow.querySelector('.lcf-method').value;
+    const notes = formRow.querySelector('.lcf-notes').value.trim();
+    const nextFollowUp = isoToMmddyyyy(nextInput.value);
+    const resultKey = resultSel ? resultSel.value : '';
+    const resultObj = REFERRAL_RESULTS.find(x=>x.key===resultKey);
+    const todayStr = fmtDateSlash(new Date());
+    const prevNext = rec.next_follow_up_date;
+
+    const updates = { last_contact_date: todayStr, next_follow_up_date: nextFollowUp, updated_at: new Date().toISOString() };
+    const { error } = await sb.from(TABLE).update(updates).eq('mls_number', mls);
+    if(error){ showToast('Could not save — please try again', true); return null; }
+    Object.assign(rec, updates);
+
+    const desc = `${notes || ('Logged ' + method.toLowerCase() + '.')}${resultObj ? ' — Result: ' + resultObj.label : ''}`;
+    await addActivityLogEntry(mls, {
+      activity_type: method,
+      description: desc,
+      related_property: rec.address,
+      previous_value: prevNext ? `Next follow-up: ${prevNext}` : '',
+      new_value: nextFollowUp ? `Next follow-up: ${nextFollowUp}` : '',
+      follow_up_date: nextFollowUp
+    });
+
+    showToast('Saved');
+
+    if(resultObj && resultObj.key === 'became-client' && rec.relationship_status !== 'Active Client'){
+      const prevRel = rec.relationship_status;
+      showConfirmModal(
+        'Update Relationship Status?',
+        `Mark ${rec.owner1_name || 'this contact'} as an Active Client now that they've moved forward?`,
+        'Yes, Make Active',
+        async (confirmed)=>{
+          if(confirmed){
+            const { error: err2 } = await sb.from(TABLE).update({relationship_status:'Active Client', updated_at: new Date().toISOString()}).eq('mls_number', mls);
+            if(!err2){
+              rec.relationship_status = 'Active Client';
+              await addActivityLogEntry(mls, {activity_type:'Status Changed', description:`Relationship Status changed from ${prevRel} to Active Client.`, related_property: rec.address, previous_value: prevRel, new_value:'Active Client'});
+              showToast('Updated to Active Client');
+            }
+          }
+          rerender();
+        }
+      );
+    }
+    return rec;
+  }
+
+  formRow.querySelector('.lcf-save').addEventListener('click', async ()=>{
+    const rec = await saveLogContact();
+    if(!rec) return;
+    logContactMls = null; logContactMode = null;
+    rerender();
+  });
+
+  formRow.querySelector('.lcf-new-lead').addEventListener('click', async ()=>{
+    const rec = records.find(r=>r.mls_number===mls);
+    if(!rec) return;
+    await saveLogContact();
+    logContactMls = null; logContactMode = null;
+    openAddLead({ relationship_status:'Warm Lead', referred_by: rec.owner1_name || '' });
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Referrals & Leads workflow view (table) — prospects and referral-sourced
+// contacts who have not yet become clients. Same shared records array as the
+// other two tabs; logging a result here updates the same record everyone
+// else sees, and appends to the same permanent Activity Log.
+// ---------------------------------------------------------------------------
+function renderReferrals(){
+  const wrap = document.getElementById('referralsWrap');
+  const term = searchTerm.trim().toLowerCase();
+  const eligibleAll = records.filter(isReferralLeadEligible).filter(r=>matchesSearch(r, term));
+
+  const FOLLOWUP_STATUSES = ['Not Scheduled','Scheduled','Due Today','Overdue', ...FOLLOWUP_OVERRIDE_OPTIONS];
+  const statusCounts = {};
+  FOLLOWUP_STATUSES.forEach(s=> statusCounts[s]=0 );
+  eligibleAll.forEach(r=> statusCounts[computeFollowUpStatus(r)]++ );
+
+  const eligible = eligibleAll.filter(r=>{
+    if(filterReferralFollowUp === 'all') return true;
+    return computeFollowUpStatus(r) === filterReferralFollowUp;
+  }).slice().sort((a,b)=>{
+    const da = parseDate(a.next_follow_up_date), db = parseDate(b.next_follow_up_date);
+    if(!da && !db) return 0;
+    if(!da) return 1;
+    if(!db) return -1;
+    return da - db;
+  });
+
+  const addLeadBtnHtml = `<div style="margin:26px 6vw 0;"><button class="btn-pill primary ui" id="addLeadBtn">+ Add Lead</button></div>`;
+
+  const filterBtnsHtml = `
+    <div class="thelist-filters" id="referralsFilters" style="margin-top:14px;">
+      <span class="grp-label ui">Follow-Up Status</span>
+      <button class="filter-btn ${filterReferralFollowUp==='all'?'active':''}" data-rfval="all">All (${eligibleAll.length})</button>
+      ${FOLLOWUP_STATUSES.map(s=>`<button class="filter-btn ${filterReferralFollowUp===s?'active':''}" data-rfval="${s}">${s} (${statusCounts[s]})</button>`).join('')}
+    </div>
+    <div class="thelist-count">Showing ${eligible.length} of ${eligibleAll.length} referrals &amp; leads</div>
+  `;
+
+  if(!eligibleAll.length){
+    wrap.innerHTML = addLeadBtnHtml + `<div class="empty-state">${term ? 'No matches on Referrals & Leads for that search.' : 'No prospects or referral-sourced leads yet — click "+ Add Lead" above, or one will appear automatically when you set Relationship Status to Prospect / Warm Lead, or Client Type to Referral.'}</div>`;
+    wireAddLeadButton(wrap);
+    return;
+  }
+  if(!eligible.length){
+    wrap.innerHTML = addLeadBtnHtml + filterBtnsHtml + '<div class="empty-state">No records match this Follow-Up Status filter.</div>';
+    wireAddLeadButton(wrap);
+    wireReferralsFilterButtons(wrap);
+    return;
+  }
+
+  wrap.innerHTML = addLeadBtnHtml + filterBtnsHtml + `
+    <table class="thelist-table">
+      <thead><tr>
+        <th>Client</th><th>Source / Property</th><th>Referred By</th><th>Client Type</th><th>Relationship</th><th>Info Status</th>
+        <th>Last Contact</th><th>Next Follow-Up</th><th>Notes</th><th>Assigned</th><th></th>
+      </tr></thead>
+      <tbody>
+        ${eligible.map(r=>`
+          <tr data-mls="${escapeHtml(r.mls_number)}">
+            <td>${escapeHtml(r.owner1_name || 'Name unknown')}</td>
+            <td>${escapeHtml(r.address || 'No linked property')}</td>
+            <td>${escapeHtml(r.referred_by || '—')}</td>
+            <td>${typeArr(r).map(t=>`<span class="role-pill">${escapeHtml(t)}</span>`).join(' ') || '—'}</td>
+            <td><span class="badge ${toneOf(r.relationship_status)}">${escapeHtml(r.relationship_status||'—')}</span></td>
+            <td><span class="badge ${toneOf(r.client_info_status)}">${escapeHtml(r.client_info_status)}</span></td>
+            <td>${escapeHtml(r.last_contact_date||'—')}</td>
+            <td><span class="badge ${toneOf(computeFollowUpStatus(r))}">${escapeHtml(r.next_follow_up_date || computeFollowUpStatus(r))}</span></td>
+            <td style="max-width:180px;">${escapeHtml((r.client_note||'').slice(0,80))}</td>
+            <td>${escapeHtml(r.assigned_agent||'')}</td>
+            <td>
+              <button class="thelist-action-btn" data-logresult="${escapeHtml(r.mls_number)}">Log Result</button>
+              <button class="thelist-link" data-open="${escapeHtml(r.mls_number)}" style="margin-left:8px;">Open</button>
+            </td>
+          </tr>
+          ${logContactMls===r.mls_number && logContactMode==='result' ? logContactFormHtml(r, 'result') : ''}
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+
+  wrap.querySelectorAll('[data-logresult]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      logContactMls = btn.dataset.logresult;
+      logContactMode = 'result';
+      renderReferrals();
+    });
+  });
+  wrap.querySelectorAll('[data-open]').forEach(btn=>{
+    btn.addEventListener('click', ()=> openRecordForEdit(btn.dataset.open));
+  });
+  wireAddLeadButton(wrap);
+  wireReferralsFilterButtons(wrap);
+  wireLogContactForm(wrap, renderReferrals);
+}
+function wireAddLeadButton(wrap){
+  const btn = wrap.querySelector('#addLeadBtn');
+  if(btn) btn.addEventListener('click', ()=> openAddLead({ relationship_status:'Warm Lead' }));
+}
+function wireReferralsFilterButtons(wrap){
+  wrap.querySelectorAll('#referralsFilters .filter-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      filterReferralFollowUp = btn.dataset.rfval;
+      renderReferrals();
+    });
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Edit card
+// ---------------------------------------------------------------------------
+function clientTypeCheckboxesHtml(selected){
+  return CLIENT_TYPES.map(t=>`
+    <label class="checkbox-pill"><input type="checkbox" class="f-client-type" value="${t}" ${selected.includes(t)?'checked':''}>${t}</label>
+  `).join('');
+}
+function selectHtml(cls, options, current, placeholder){
+  return `<select class="${cls}">
+    ${placeholder ? `<option value="" ${!current?'selected':''}>${placeholder}</option>` : ''}
+    ${options.map(o=>`<option value="${o}" ${current===o?'selected':''}>${o}</option>`).join('')}
+  </select>`;
+}
+
+function renderEditCard(r){
+  const rental = isRentalRole(r.role);
+  const suggestedEnd = !r.lease_end_date ? suggestLeaseEnd(r.sold_date, 12) : null;
+  const leaseEndValue = r.lease_end_date || (suggestedEnd ? fmtDateSlash(suggestedEnd) : '');
+  const autoStatus = computeAutoInfoStatus({...r, client_type: typeArr(r)});
+  const overridden = !!r.client_info_status_overridden;
+  const missing = missingFieldsList(r);
+  const appreciation = (r.estimated_current_value != null && r.original_purchase_price != null)
+    ? (Number(r.estimated_current_value) - Number(r.original_purchase_price)) : null;
+
+  return `
+    <div class="card editing" data-mls="${escapeHtml(r.mls_number)}">
+      <div class="edit-form">
+        <div class="addr-label">${escapeHtml(r.address)} — ${escapeHtml(r.city||'')} · ${escapeHtml(r.role||'')} · closed ${escapeHtml(r.sold_date||'—')}</div>
+
+        ${missing.length ? `<div class="validation-note">This record is still incomplete: ${missing.map(m=>`Missing ${m}`).join(', ')}.</div>` : ''}
+
+        ${rental ? `
+        <div class="lease-edit-row">
+          <div class="oe-title">Lease Dates</div>
+          <div class="lease-edit-grid">
+            <div><label>Lease Started</label><input type="text" class="f-lease-start" value="${escapeHtml(r.sold_date||'')}" placeholder="MM/DD/YYYY"></div>
+            <div>
+              <label>Lease Expires</label>
+              <input type="text" class="f-lease-end" value="${escapeHtml(leaseEndValue)}" placeholder="MM/DD/YYYY">
+              ${suggestedEnd ? '<div class="lease-est-hint">Pre-filled assuming a standard 12-month lease, ending the last day of that month — edit if the real term is different.</div>' : ''}
+            </div>
+          </div>
+        </div>` : ''}
+
+        <div class="owner-edit-grid">
+          <div class="owner-edit">
+            <div class="oe-title">Client 1</div>
+            <label>Name</label><input type="text" class="f-o1-name" value="${escapeHtml(r.owner1_name||'')}">
+            <label>Email</label><input type="text" class="f-o1-email" value="${escapeHtml(r.owner1_email||'')}">
+            <label>Phone</label><input type="text" class="f-o1-phone" value="${escapeHtml(r.owner1_phone||'')}">
+            <label>Birthday</label><input type="text" class="f-o1-bday" placeholder="MM/DD" value="${escapeHtml(r.owner1_birthday||'')}">
+          </div>
+          <div class="owner-edit">
+            <div class="oe-title">Client 2</div>
+            <label>Name</label><input type="text" class="f-o2-name" value="${escapeHtml(r.owner2_name||'')}">
+            <label>Email</label><input type="text" class="f-o2-email" value="${escapeHtml(r.owner2_email||'')}">
+            <label>Phone</label><input type="text" class="f-o2-phone" value="${escapeHtml(r.owner2_phone||'')}">
+            <label>Birthday</label><input type="text" class="f-o2-bday" placeholder="MM/DD" value="${escapeHtml(r.owner2_birthday||'')}">
+          </div>
+        </div>
+
+        <div class="edit-section">
+          <div class="es-title">Status &amp; Relationship</div>
+          <div class="edit-grid-3">
+            <div>
+              <label>Client Information Status</label>
+              ${selectHtml('f-info-status', INFO_STATUSES, overridden ? r.client_info_status : autoStatus)}
+              <div class="auto-hint" id="autoStatusHint">${overridden ? 'Manually overridden.' : `Auto-computed from the fields below: ${autoStatus}.`}</div>
+              <div class="override-row">
+                <input type="checkbox" class="f-info-override" id="infoOverrideBox" ${overridden?'checked':''}>
+                <label style="margin:0;text-transform:none;font-weight:400;" for="infoOverrideBox">Manually set this status instead of auto-computing it</label>
+              </div>
+            </div>
+            <div>
+              <label>Relationship Status</label>
+              ${selectHtml('f-relationship', RELATIONSHIP_STATUSES, r.relationship_status, 'Select…')}
+            </div>
+            <div>
+              <label>Property Status</label>
+              ${selectHtml('f-prop-status', PROPERTY_STATUSES, r.property_status)}
+            </div>
+          </div>
+          <label>Client Type (select all that apply)</label>
+          <div class="checkbox-grid">${clientTypeCheckboxesHtml(typeArr(r))}</div>
+          <div class="edit-grid-2">
+            <div><label>Assigned Agent</label>${selectHtml('f-assigned-agent', ASSIGNED_AGENTS, r.assigned_agent || 'Jeannette')}</div>
+            <div><label>Referred By (optional)</label><input type="text" class="f-referred-by" value="${escapeHtml(r.referred_by||'')}" placeholder="Who sent you this client?"></div>
+          </div>
+        </div>
+
+        <div class="edit-section">
+          <div class="es-title">Follow-Up</div>
+          <div class="edit-grid-3">
+            <div><label>Last Contact Date</label><input type="date" class="f-last-contact" value="${mmddyyyyToIso(r.last_contact_date)}"></div>
+            <div><label>Next Follow-Up Date</label><input type="date" class="f-next-followup" value="${mmddyyyyToIso(r.next_follow_up_date)}"></div>
+            <div>
+              <label>Follow-Up Status</label>
+              ${selectHtml('f-followup-override', ['', ...FOLLOWUP_OVERRIDE_OPTIONS], r.follow_up_status_override, 'Auto (from date above)')}
+            </div>
+          </div>
+          <label>Follow-Up Reason</label><input type="text" class="f-followup-reason" value="${escapeHtml(r.follow_up_reason||'')}" placeholder="e.g. Lease renewal conversation">
+        </div>
+
+        <div class="edit-section">
+          <div class="es-title">Annual 58 Home Review</div>
+          <div class="edit-grid-3">
+            <div><label>Review Status</label>${selectHtml('f-review-status', ANNUAL_REVIEW_STATUSES, r.annual_review_status || 'Not Applicable')}</div>
+            <div><label>Last Review Date</label><input type="date" class="f-review-last" value="${mmddyyyyToIso(r.annual_review_last_date)}"></div>
+            <div><label>Next Review Date</label><input type="date" class="f-review-next" value="${mmddyyyyToIso(r.annual_review_next_date)}"></div>
+          </div>
+          <div class="edit-grid-3">
+            <div><label>Estimated Current Value</label><input type="text" class="f-est-value" value="${r.estimated_current_value != null ? r.estimated_current_value : ''}" placeholder="$"></div>
+            <div><label>Original Purchase Price</label><input type="text" class="f-orig-price" value="${r.original_purchase_price != null ? r.original_purchase_price : ''}" placeholder="$"></div>
+            <div><label>Estimated Appreciation</label><input type="text" value="${appreciation != null ? '$'+appreciation.toLocaleString() : '—'}" disabled></div>
+          </div>
+          <div class="edit-grid-2">
+            <div><label>Comparable Sales Link</label><input type="text" class="f-comps-link" value="${escapeHtml(r.comparable_sales_link||'')}" placeholder="https://…"></div>
+            <div><label>Printable Report Link</label><input type="text" class="f-report-link" value="${escapeHtml(r.printable_report_link||'')}" placeholder="https://…"></div>
+          </div>
+        </div>
+
+        <div class="bottom-row" style="grid-template-columns:1fr;">
+          <div><label>Notes</label><textarea class="f-note">${escapeHtml(r.client_note||'')}</textarea></div>
+        </div>
+
+        <div class="edit-section">
+          <div class="es-title">Activity Log</div>
+          <div class="activity-log" style="border-top:none;padding-top:0;">${activityLogHtml(r.mls_number)}</div>
+          <div class="log-add-row">
+            <div><label>Activity Type</label>${selectHtml('f-log-type', ACTIVITY_TYPES, 'Phone Call')}</div>
+            <div><label>Description</label><input type="text" class="f-log-desc" placeholder="Short note about this activity"></div>
+            <div><label>Follow-up Date</label><input type="date" class="f-log-followup"></div>
+            <button class="btn-pill ui" data-log-add="${escapeHtml(r.mls_number)}">Log Entry</button>
+          </div>
+        </div>
+
+        <div class="edit-actions">
+          <span class="save-confirm ui" id="saveConfirm-${escapeHtml(r.mls_number)}">Saved</span>
+          <button class="btn-cancel ui" data-cancel="1">Cancel</button>
+          <button class="btn-save ui" data-save="${escapeHtml(r.mls_number)}">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderNewCard(){
+  const prefill = newLeadPrefill || {};
+  const isLead = !!prefill.referred_by;
+  return `
+    <div class="card editing" data-mls="__new__">
+      <div class="edit-form">
+        <div class="addr-label">${isLead ? `New Referral Lead — referred by ${escapeHtml(prefill.referred_by)}` : 'New Client / Property'}</div>
+
+        <div class="owner-edit-grid">
+          <div class="owner-edit">
+            <div class="oe-title">Property</div>
+            <label>Address (required — for a lead with no property yet, note their name/situation here)</label>
+            <input type="text" class="f-new-address" placeholder="e.g. 123 Main St, or 'Lead — no property yet'" value="${isLead ? "Lead — no property yet" : ''}">
+            <label>City</label><input type="text" class="f-new-city" placeholder="City">
+            <label>MLS# (optional)</label><input type="text" class="f-new-mls" placeholder="Leave blank to auto-generate">
+          </div>
+          <div class="owner-edit">
+            <div class="oe-title">Transaction</div>
+            <label>Role</label>
+            <select class="f-new-role">
+              ${ROLES.map(r=>`<option value="${r}">${r}</option>`).join('')}
+            </select>
+            <label>Date (closing / lease start, MM/DD/YYYY — optional)</label>
+            <input type="text" class="f-new-solddate" placeholder="MM/DD/YYYY">
+            <label>Lease Expires (rentals only, MM/DD/YYYY — optional)</label>
+            <input type="text" class="f-new-leaseend" placeholder="MM/DD/YYYY">
+          </div>
+        </div>
+
+        <div class="owner-edit-grid">
+          <div class="owner-edit">
+            <div class="oe-title">Client 1</div>
+            <label>Name</label><input type="text" class="f-o1-name">
+            <label>Email</label><input type="text" class="f-o1-email">
+            <label>Phone</label><input type="text" class="f-o1-phone">
+            <label>Birthday</label><input type="text" class="f-o1-bday" placeholder="MM/DD">
+          </div>
+          <div class="owner-edit">
+            <div class="oe-title">Client 2</div>
+            <label>Name</label><input type="text" class="f-o2-name">
+            <label>Email</label><input type="text" class="f-o2-email">
+            <label>Phone</label><input type="text" class="f-o2-phone">
+            <label>Birthday</label><input type="text" class="f-o2-bday" placeholder="MM/DD">
+          </div>
+        </div>
+
+        <div class="edit-section">
+          <div class="es-title">Status &amp; Relationship</div>
+          <div class="edit-grid-3">
+            <div><label>Client Information Status</label>${selectHtml('f-info-status', INFO_STATUSES, 'Not Reviewed')}</div>
+            <div><label>Relationship Status</label>${selectHtml('f-relationship', RELATIONSHIP_STATUSES, prefill.relationship_status || 'Prospect')}</div>
+            <div><label>Property Status</label>${selectHtml('f-prop-status', PROPERTY_STATUSES, 'Unknown')}</div>
+          </div>
+          <label>Client Type (select all that apply)</label>
+          <div class="checkbox-grid">${clientTypeCheckboxesHtml(isLead ? ['Referral'] : [])}</div>
+          <div class="edit-grid-2">
+            <div><label>Assigned Agent</label>${selectHtml('f-assigned-agent', ASSIGNED_AGENTS, 'Jeannette')}</div>
+            <div><label>Referred By (optional)</label><input type="text" class="f-referred-by" placeholder="Who sent you this lead?" value="${escapeHtml(prefill.referred_by||'')}"></div>
+          </div>
+        </div>
+
+        <div class="edit-section">
+          <div class="es-title">Follow-Up</div>
+          <div class="edit-grid-2">
+            <div><label>Next Follow-Up Date</label><input type="date" class="f-next-followup"></div>
+            <div><label>Follow-Up Reason</label><input type="text" class="f-followup-reason" placeholder="e.g. Initial outreach"></div>
+          </div>
+        </div>
+
+        <div class="bottom-row" style="grid-template-columns:1fr;">
+          <div><label>Notes</label><textarea class="f-note">${isLead ? `Referral lead from a call with ${escapeHtml(prefill.referred_by)}.` : ''}</textarea></div>
+        </div>
+
+        <div class="edit-actions">
+          <button class="btn-cancel ui" data-new-cancel="1">Cancel</button>
+          <button class="btn-save ui" data-new-save="1">Add to Dashboard</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function wireNewCardEvents(){
+  const list = document.getElementById('list');
+  const cancelBtn = list.querySelector('[data-new-cancel]');
+  if(cancelBtn) cancelBtn.addEventListener('click', ()=>{ addingNew = false; newLeadPrefill = null; render(); });
+  const saveBtn = list.querySelector('[data-new-save]');
+  if(saveBtn){
+    saveBtn.addEventListener('click', async ()=>{
+      const card = list.querySelector('.card[data-mls="__new__"]');
+      const address = card.querySelector('.f-new-address').value.trim();
+      if(!address){ showToast('Address (or lead note) is required', true); return; }
+      let mls = card.querySelector('.f-new-mls').value.trim();
+      if(!mls) mls = `LEAD-${Date.now()}`;
+      const clientTypes = Array.from(card.querySelectorAll('.f-client-type:checked')).map(cb=>cb.value);
+      const newRecord = {
+        mls_number: mls,
+        address,
+        city: card.querySelector('.f-new-city').value.trim(),
+        role: card.querySelector('.f-new-role').value,
+        sold_date: card.querySelector('.f-new-solddate').value.trim(),
+        lease_end_date: card.querySelector('.f-new-leaseend').value.trim(),
+        owner1_name: card.querySelector('.f-o1-name').value.trim(),
+        owner1_email: card.querySelector('.f-o1-email').value.trim(),
+        owner1_phone: card.querySelector('.f-o1-phone').value.trim(),
+        owner1_birthday: card.querySelector('.f-o1-bday').value.trim(),
+        owner2_name: card.querySelector('.f-o2-name').value.trim(),
+        owner2_email: card.querySelector('.f-o2-email').value.trim(),
+        owner2_phone: card.querySelector('.f-o2-phone').value.trim(),
+        owner2_birthday: card.querySelector('.f-o2-bday').value.trim(),
+        client_info_status: card.querySelector('.f-info-status').value,
+        relationship_status: card.querySelector('.f-relationship').value,
+        client_type: clientTypes,
+        assigned_agent: card.querySelector('.f-assigned-agent').value,
+        referred_by: card.querySelector('.f-referred-by').value.trim(),
+        property_status: card.querySelector('.f-prop-status').value,
+        next_follow_up_date: isoToMmddyyyy(card.querySelector('.f-next-followup').value),
+        follow_up_reason: card.querySelector('.f-followup-reason').value.trim(),
+        client_note: card.querySelector('.f-note').value.trim(),
+        client_status: 'NO_RESEARCH',
+        updated_at: new Date().toISOString()
+      };
+      newRecord.client_name = newRecord.owner1_name + (newRecord.owner2_name ? ` & ${newRecord.owner2_name}` : '');
+      newRecord.client_email = [newRecord.owner1_email, newRecord.owner2_email].filter(Boolean).join('; ');
+
+      saveBtn.disabled = true; saveBtn.textContent = 'Adding…';
+      const { error } = await sb.from(TABLE).insert(newRecord);
+      if(error){ showToast('Could not add — please try again', true); saveBtn.disabled=false; saveBtn.textContent='Add to Dashboard'; return; }
+      records.unshift(newRecord);
+      await addActivityLogEntry(mls, {activity_type:'Record Created', description: newRecord.referred_by ? `New referral lead created — referred by ${newRecord.referred_by}.` : 'New client/property record created.', related_property: address});
+      addingNew = false;
+      newLeadPrefill = null;
+      updateStats();
+      renderUpcoming();
+      renderMainView();
+      showToast('Added — now visible to everyone viewing this page');
+    });
+  }
+}
+
+function wireEditCardEvents(){
+  const list = document.getElementById('list');
+  const cancelBtn = list.querySelector('[data-cancel]');
+  if(cancelBtn) cancelBtn.addEventListener('click', ()=>{ editingMls = null; render(); });
+
+  const overrideBox = list.querySelector('.f-info-override');
+  if(overrideBox){
+    overrideBox.addEventListener('change', ()=>{
+      const sel = list.querySelector('.f-info-status');
+      const hint = list.querySelector('#autoStatusHint');
+      sel.disabled = !overrideBox.checked;
+      if(!overrideBox.checked){
+        const r = records.find(x=>x.mls_number===editingMls);
+        const draft = { ...r,
+          owner1_name: list.querySelector('.f-o1-name').value.trim(),
+          owner1_email: list.querySelector('.f-o1-email').value.trim(),
+          owner1_phone: list.querySelector('.f-o1-phone').value.trim(),
+          owner2_email: list.querySelector('.f-o2-email').value.trim(),
+          owner2_phone: list.querySelector('.f-o2-phone').value.trim(),
+          relationship_status: list.querySelector('.f-relationship').value,
+          client_type: Array.from(list.querySelectorAll('.f-client-type:checked')).map(cb=>cb.value)
+        };
+        const auto = computeAutoInfoStatus(draft);
+        sel.value = auto;
+        hint.textContent = `Auto-computed from the fields above: ${auto}.`;
+      } else {
+        hint.textContent = 'Manually overridden.';
+      }
+    });
+  }
+
+  const logAddBtn = list.querySelector('[data-log-add]');
+  if(logAddBtn){
+    logAddBtn.addEventListener('click', async ()=>{
+      const mls = logAddBtn.dataset.logAdd;
+      const type = list.querySelector('.f-log-type').value;
+      const desc = list.querySelector('.f-log-desc').value.trim();
+      const followup = isoToMmddyyyy(list.querySelector('.f-log-followup').value);
+      if(!desc){ showToast('Add a short description before logging', true); return; }
+      const r = records.find(x=>x.mls_number===mls);
+      const updates = {};
+      if(CONTACT_ACTIVITY_TYPES.includes(type)) updates.last_contact_date = fmtDateSlash(new Date());
+      if(followup) updates.next_follow_up_date = followup;
+      if(Object.keys(updates).length){
+        updates.updated_at = new Date().toISOString();
+        await sb.from(TABLE).update(updates).eq('mls_number', mls);
+        if(r) Object.assign(r, updates);
+      }
+      await addActivityLogEntry(mls, {activity_type:type, description:desc, related_property: r?r.address:'', follow_up_date: followup});
+      showToast('Activity logged');
+      render();
+    });
+  }
+
+  const saveBtn = list.querySelector('[data-save]');
+  if(saveBtn){
+    saveBtn.addEventListener('click', async ()=>{
+      const card = list.querySelector('.card.editing');
+      const mls = saveBtn.dataset.save;
+      const r = records.find(x=>x.mls_number===mls);
+      const prevInfoStatus = r.client_info_status, prevRelationship = r.relationship_status, prevPropStatus = r.property_status;
+
+      const clientTypes = Array.from(card.querySelectorAll('.f-client-type:checked')).map(cb=>cb.value);
+      const overridden = card.querySelector('.f-info-override').checked;
+      const updates = {
+        owner1_name: card.querySelector('.f-o1-name').value.trim(),
+        owner1_email: card.querySelector('.f-o1-email').value.trim(),
+        owner1_phone: card.querySelector('.f-o1-phone').value.trim(),
+        owner1_birthday: card.querySelector('.f-o1-bday').value.trim(),
+        owner2_name: card.querySelector('.f-o2-name').value.trim(),
+        owner2_email: card.querySelector('.f-o2-email').value.trim(),
+        owner2_phone: card.querySelector('.f-o2-phone').value.trim(),
+        owner2_birthday: card.querySelector('.f-o2-bday').value.trim(),
+        relationship_status: card.querySelector('.f-relationship').value,
+        client_type: clientTypes,
+        assigned_agent: card.querySelector('.f-assigned-agent').value,
+        referred_by: card.querySelector('.f-referred-by').value.trim(),
+        property_status: card.querySelector('.f-prop-status').value,
+        last_contact_date: isoToMmddyyyy(card.querySelector('.f-last-contact').value),
+        next_follow_up_date: isoToMmddyyyy(card.querySelector('.f-next-followup').value),
+        follow_up_reason: card.querySelector('.f-followup-reason').value.trim(),
+        follow_up_status_override: card.querySelector('.f-followup-override').value,
+        annual_review_status: card.querySelector('.f-review-status').value,
+        annual_review_last_date: isoToMmddyyyy(card.querySelector('.f-review-last').value),
+        annual_review_next_date: isoToMmddyyyy(card.querySelector('.f-review-next').value),
+        comparable_sales_link: card.querySelector('.f-comps-link').value.trim(),
+        printable_report_link: card.querySelector('.f-report-link').value.trim(),
+        client_note: card.querySelector('.f-note').value.trim(),
+        client_info_status_overridden: overridden,
+        updated_at: new Date().toISOString()
+      };
+      const estVal = card.querySelector('.f-est-value').value.trim();
+      const origVal = card.querySelector('.f-orig-price').value.trim();
+      updates.estimated_current_value = estVal ? Number(estVal.replace(/[^0-9.-]/g,'')) : null;
+      updates.original_purchase_price = origVal ? Number(origVal.replace(/[^0-9.-]/g,'')) : null;
+
+      updates.client_info_status = overridden
+        ? card.querySelector('.f-info-status').value
+        : computeAutoInfoStatus({...updates});
+
+      const leaseStartEl = card.querySelector('.f-lease-start');
+      const leaseEndEl = card.querySelector('.f-lease-end');
+      if(leaseStartEl) updates.sold_date = leaseStartEl.value.trim();
+      if(leaseEndEl) updates.lease_end_date = leaseEndEl.value.trim();
+      updates.client_name = updates.owner1_name + (updates.owner2_name ? ` & ${updates.owner2_name}` : '');
+      updates.client_email = [updates.owner1_email, updates.owner2_email].filter(Boolean).join('; ');
+
+      const finishSave = async ()=>{
+        saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
+        const { error } = await sb.from(TABLE).update(updates).eq('mls_number', mls);
+        if(error){ showToast('Could not save — please try again', true); saveBtn.disabled=false; saveBtn.textContent='Save Changes'; return; }
+        Object.assign(r, updates);
+
+        if(updates.client_info_status !== prevInfoStatus){
+          await addActivityLogEntry(mls, {activity_type:'Status Changed', description: overridden ? 'Client Information Status manually overridden.' : 'Client Information Status changed.', related_property:r.address, previous_value: prevInfoStatus, new_value: updates.client_info_status});
+        }
+        if(updates.relationship_status !== prevRelationship){
+          await addActivityLogEntry(mls, {activity_type:'Status Changed', description:'Relationship Status changed.', related_property:r.address, previous_value: prevRelationship, new_value: updates.relationship_status});
+        }
+        if(updates.property_status !== prevPropStatus){
+          await addActivityLogEntry(mls, {activity_type:'Property Ownership Updated', description:'Property Status changed.', related_property:r.address, previous_value: prevPropStatus, new_value: updates.property_status});
+        }
+
+        const confirmEl = document.getElementById(`saveConfirm-${mls}`);
+        if(confirmEl) confirmEl.classList.add('show');
+        updateStats();
+        renderUpcoming();
+        render();
+        showToast('Saved — everyone viewing this page now sees the update');
+      };
+
+      // Active Client Logic: ask before flipping Active Client -> Past Client on a closing transaction
+      const closingStatuses = ['Purchased','Sold','Leased'];
+      if(prevRelationship === 'Active Client' && closingStatuses.includes(updates.property_status) && updates.property_status !== prevPropStatus){
+        showConfirmModal(
+          'Move to Past Client?',
+          `This property status is changing to "${updates.property_status}" — the transaction appears to have closed. Change Relationship Status from Active Client to Past Client?`,
+          'Yes, Move to Past Client',
+          async (confirmed)=>{
+            if(confirmed) updates.relationship_status = 'Past Client';
+            await finishSave();
+          }
+        );
+      } else {
+        await finishSave();
+      }
+    });
+  }
+}
+
+document.getElementById('search').addEventListener('input', (e)=>{ searchTerm = e.target.value; renderMainView(); });
+
+document.getElementById('addNewBtn').addEventListener('click', ()=>{
+  addingNew = true;
+  editingMls = null;
+  render();
+  requestAnimationFrame(()=>{
+    const card = document.querySelector('.card[data-mls="__new__"]');
+    if(card) card.scrollIntoView({behavior:'smooth', block:'center'});
+  });
+});
+
+// ---------------------------------------------------------------------------
+// CSV export / import
+// ---------------------------------------------------------------------------
+const CSV_COLUMNS = ['mls_number','address','city','category_mls','transaction_type','represented','role','sold_year','list_price','sold_price','list_date','sold_date','dom',
+  'client_info_status','relationship_status','assigned_agent','referred_by','property_status','client_note',
+  'owner1_name','owner1_email','owner1_phone','owner1_birthday','owner2_name','owner2_email','owner2_phone','owner2_birthday','lease_end_date',
+  'last_contact_date','next_follow_up_date','follow_up_reason',
+  'annual_review_status','annual_review_last_date','annual_review_next_date','estimated_current_value','original_purchase_price'];
+
+function csvEscape(val){
+  const s = val==null ? '' : String(val);
+  if(/[",\n]/.test(s)) return '"' + s.replace(/"/g,'""') + '"';
+  return s;
+}
+function exportCsv(){
+  const rows = [CSV_COLUMNS.join(',')];
+  records.forEach(r=>{
+    rows.push(CSV_COLUMNS.map(col=> csvEscape(col==='client_type' ? typeArr(r).join('|') : r[col])).join(','));
+  });
+  const csv = rows.join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `properties-clients-export-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast(`Exported ${records.length} records to CSV`);
+}
+
+function parseCsvText(text){
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for(let i=0; i<text.length; i++){
+    const c = text[i];
+    if(inQuotes){
+      if(c === '"'){
+        if(text[i+1] === '"'){ field += '"'; i++; }
+        else inQuotes = false;
+      } else field += c;
+    } else {
+      if(c === '"') inQuotes = true;
+      else if(c === ','){ row.push(field); field=''; }
+      else if(c === '\n'){ row.push(field); rows.push(row); row=[]; field=''; }
+      else if(c === '\r'){ /* skip */ }
+      else field += c;
+    }
+  }
+  if(field.length || row.length){ row.push(field); rows.push(row); }
+  return rows.filter(r => r.length > 1 || (r.length===1 && r[0] !== ''));
+}
+
+async function importCsvFile(file){
+  const text = await file.text();
+  const rows = parseCsvText(text);
+  if(rows.length < 2){ showToast('CSV appears to be empty', true); return; }
+  const headers = rows[0].map(h=>h.trim());
+  const dataRows = rows.slice(1);
+  const numericCols = new Set(['sold_year','list_price','sold_price','dom','estimated_current_value','original_purchase_price']);
+  const payload = dataRows.map(cols=>{
+    const obj = {};
+    headers.forEach((h,i)=>{
+      if(!CSV_COLUMNS.includes(h)) return;
+      let v = cols[i] !== undefined ? cols[i] : '';
+      obj[h] = numericCols.has(h) ? (v === '' ? null : Number(v)) : v;
+    });
+    return obj;
+  }).filter(o => o.mls_number);
+
+  if(!payload.length){ showToast('No valid rows found (need an mls_number column)', true); return; }
+
+  showToast(`Importing ${payload.length} rows…`);
+  const BATCH = 50;
+  let imported = 0, failed = 0;
+  for(let i=0; i<payload.length; i+=BATCH){
+    const batch = payload.slice(i, i+BATCH);
+    const { error } = await sb.from(TABLE).upsert(batch, {onConflict:'mls_number'});
+    if(error) failed += batch.length; else imported += batch.length;
+  }
+  showToast(failed ? `Imported ${imported} rows, ${failed} failed` : `Imported ${imported} rows successfully`, !!failed);
+  await loadData();
+}
+
+document.getElementById('exportCsvBtn').addEventListener('click', exportCsv);
+document.getElementById('importCsvBtn').addEventListener('click', ()=> document.getElementById('importFileInput').click());
+document.getElementById('importFileInput').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(file) importCsvFile(file);
+  e.target.value = '';
+});
+
+loadData();
+</script>
+
+</body>
+</html>
