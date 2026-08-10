@@ -383,7 +383,7 @@
   </div>
 </div>
 
-<div id="resultCountWrap" style="display:none;"><span id="resultCount"></span><span id="sortWrap"></span></div>
+<div id="resultCountWrap" style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span id="resultCount" style="font-family:'Jost',sans-serif;font-size:11px;color:var(--ink4);letter-spacing:.04em;"></span><span id="sortWrap"></span></div>
 
 <div class="list" id="list"><div class="loading">Loading your clients…</div></div>
 
@@ -1064,14 +1064,14 @@ function render(){
   const list = document.getElementById('list');
   const filtered = filteredRecords();
 
-  document.getElementById('resultCount').textContent = `Showing ${filtered.length} of ${records.length} clients`;
+  document.getElementById('resultCount').textContent = filtered.length < records.length ? `${filtered.length} of ${records.length}` : `${records.length} total`;
 
   if(filtered.length === 0 && !addingNew){
     list.innerHTML = '<div class="empty-state"><h3>No matches</h3><p>Try a different search or filter.</p></div>';
     return;
   }
-  if(viewMode === 'grouped' && !addingNew){ renderGrouped(filtered); return; }
-  if(viewMode === 'property' && !addingNew){ renderByProperty(filtered); return; }
+  if(viewMode === 'grouped' && !addingNew){ renderGrouped(filteredRecords()); return; }
+  if(viewMode === 'property' && !addingNew){ renderByProperty(filteredRecords()); return; }
 
   const cardsHtml = filtered.map(r=>{
     if(r.mls_number === editingMls) return renderEditCard(r);
