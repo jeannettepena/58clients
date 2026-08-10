@@ -180,7 +180,7 @@
   .ck-item.done .ck-label{color:var(--ink3);text-decoration:line-through;}
 
   /* FILTER CHIPS */
-  .filter-row{margin:10px 6vw 0;display:flex;gap:6px;flex-wrap:wrap;}
+  .filter-row{margin:8px 6vw 0;display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
   .fchip{background:transparent;border:1px solid var(--border);color:var(--ink3);font-size:11px;letter-spacing:.06em;font-family:'Jost',sans-serif;padding:5px 12px;border-radius:30px;cursor:pointer;transition:all .2s;font-weight:400;}
   .fchip:hover{border-color:var(--champ);}
   .fchip.on{background:var(--champ);color:var(--navy);border-color:var(--champ);font-weight:500;}
@@ -250,9 +250,9 @@
     <input type="text" id="search" placeholder="Search by name, address, city, MLS#, or email…">
   </div>
   <div class="controls-actions" id="controlsActions">
-    <button class="btn-pill primary ui" id="addNewBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="vertical-align:middle;margin-right:5px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Client / Property</button>
-    <button class="btn-pill ui" id="exportCsvBtn">Export CSV</button>
-    <button class="btn-pill ui" id="importCsvBtn">Import CSV</button>
+    <button id="btn-add"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="vertical-align:middle;margin-right:5px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Client / Property</button>
+    <button id="btn-export">Export CSV</button>
+    <button id="btn-import">Import CSV</button>
     <input type="file" id="importFileInput" accept=".csv">
   </div>
 </div>
@@ -757,7 +757,7 @@ const QUICK_VIEWS = [
 function renderQuickViews(){
   const wrap = document.getElementById('quickviews');
   wrap.innerHTML = QUICK_VIEWS.map(qv=>
-    `<button class="qv-btn ${activeQuickView===qv.key?'active':''}" data-qv="${qv.key}">${qv.label}</button>`
+    `<button class="fchip ${activeQuickView===qv.key?'on':''}" data-qv="${qv.key}">${qv.label}</button>`
   ).join('');
   wrap.querySelectorAll('.qv-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
@@ -772,9 +772,9 @@ function renderQuickViews(){
 // Filters
 // ---------------------------------------------------------------------------
 function filterRowHtml(id, label, values, current, grp){
-  return `<span class="grp-label ui">${label}</span>` +
+  return `<span style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink4);font-family:'Jost',sans-serif;font-weight:500;padding:5px 4px;align-self:center;">${label}</span>` +
     ['all', ...values].map(v=>
-      `<button class="filter-btn ${current===v?'active':''}" data-grp="${grp}" data-val="${v}">${v==='all'?'All':v}</button>`
+      `<button class="fchip ${current===v?'on':''}" data-grp="${grp}" data-val="${v}">${v==='all'?'All':v}</button>`
     ).join('');
 }
 function renderFilters(){
@@ -784,15 +784,15 @@ function renderFilters(){
   document.getElementById('filterRowPropStatus').innerHTML = filterRowHtml('filterRowPropStatus','Property Status', PROPERTY_STATUSES, filterPropStatus, 'propstatus');
 
   const sortWrap = document.getElementById('sortWrap');
-  sortWrap.innerHTML = `<label class="ui" style="font-size:12.5px;color:var(--muted);">Sort by
-    <select class="sort-select" id="sortSel">
+  sortWrap.innerHTML = `<label class="ui" style="font-family:'Jost',sans-serif;font-size:11px;letter-spacing:.06em;color:var(--ink3);display:flex;align-items:center;gap:6px;">Sort by
+    <select class="sort-select" id="sortSel" style="font-family:'Jost',sans-serif;font-size:11px;padding:6px 12px;border:1px solid var(--border);border-radius:30px;background:var(--paper);color:var(--ink);outline:none;cursor:pointer;">
       <option value="recent" ${sortMode==='recent'?'selected':''}>Most Recent Transaction</option>
       <option value="anniv" ${sortMode==='anniv'?'selected':''}>Anniversary / Lease Date (Jan → Dec)</option>
       <option value="followup" ${sortMode==='followup'?'selected':''}>Follow-Up Date (Soonest First)</option>
     </select></label>`;
   document.getElementById('sortSel').addEventListener('change', (e)=>{ sortMode = e.target.value; renderMainView(); });
 
-  document.querySelectorAll('#filterRows .filter-btn').forEach(btn=>{
+  document.querySelectorAll('#filterRows .fchip').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       const grp = btn.dataset.grp, val = btn.dataset.val;
       activeQuickView = null;
