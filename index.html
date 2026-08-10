@@ -1930,6 +1930,9 @@ function wireEditCardEvents(){
 document.getElementById('search').addEventListener('input', (e)=>{ searchTerm = e.target.value; renderMainView(); });
 
 document.getElementById('addNewBtn').addEventListener('click', ()=>{
+  openAddDrawer(newLeadPrefill);
+  newLeadPrefill = null;
+  return; // legacy below kept but bypassed
   addingNew = true;
   editingMls = null;
   render();
@@ -2164,6 +2167,124 @@ function renderGrouped(list){
 function toggleGroup(key){
   const el = document.getElementById('cg-' + key);
   if(el) el.classList.toggle('expanded');
+}
+
+
+function openAddDrawer(prefill){
+  prefill = prefill || {};
+  const isLead = !!prefill.referred_by;
+  document.getElementById('drawerBadge').textContent = isLead ? 'New Referral Lead' : 'New Client / Property';
+  document.getElementById('drawerName').textContent = isLead ? `Referred by ${escapeHtml(prefill.referred_by)}` : 'New Record';
+  document.getElementById('drawerSub').textContent = 'Fill in the details below and save';
+  document.getElementById('drawerBody').innerHTML = buildAddDrawerForm(prefill);
+  document.getElementById('editDrawer').classList.add('open');
+  document.getElementById('editOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  wireAddDrawerSave(prefill);
+}
+
+function buildAddDrawerForm(prefill){
+  prefill = prefill || {};
+  const isLead = !!prefill.referred_by;
+  const selectOpts = (arr, val) => ['', ...arr].map(o => `<option value="${o}" ${o===val?'selected':''}>${o||'—'}</option>`).join('');
+  return `
+    <div class="drawer-section">
+      <div class="drawer-section-title">Property</div>
+      <div class="drawer-grid">
+        <div class="drawer-field" style="grid-column:span 2">
+          <label>Address <span style="color:var(--champ)">*</span></label>
+          <input class="f-new-address" placeholder="123 Main St, or 'Lead — no property yet'" value="${isLead ? 'Lead — no property yet' : ''}">
+        </div>
+        <div class="drawer-field"><label>City</label><input class="f-new-city" placeholder="City"></div>
+        <div class="drawer-field"><label>MLS# (optional)</label><input class="f-new-mls" placeholder="Auto-generated if blank"></div>
+        <div class="drawer-field"><label>Transaction Type</label><select class="f-new-role">${ROLES.map(r=>`<option>${r}</option>`).join('')}</select></div>
+        <div class="drawer-field"><label>Date Closed (MM/DD/YYYY)</label><input class="f-new-solddate" placeholder="MM/DD/YYYY"></div>
+        <div class="drawer-field"><label>Lease Expires (rentals)</label><input class="f-new-leaseend" placeholder="MM/DD/YYYY"></div>
+        <div class="drawer-field"><label>Property Status</label><select class="f-prop-status"><option value="">—</option>${selectOpts(PROPERTY_STATUSES, 'Unknown')}</select></div>
+      </div>
+    </div>
+    <div class="drawer-section">
+      <div class="drawer-section-title">Client 1</div>
+      <div class="drawer-grid">
+        <div class="drawer-field"><label>Name</label><input class="f-o1-name"></div>
+        <div class="drawer-field"><label>Birthday (MM/DD)</label><input class="f-o1-bday" placeholder="MM/DD"></div>
+        <div class="drawer-field"><label>Email</label><input class="f-o1-email"></div>
+        <div class="drawer-field"><label>Phone</label><input class="f-o1-phone"></div>
+      </div>
+    </div>
+    <div class="drawer-section">
+      <div class="drawer-section-title">Client 2 (optional)</div>
+      <div class="drawer-grid">
+        <div class="drawer-field"><label>Name</label><input class="f-o2-name"></div>
+        <div class="drawer-field"><label>Birthday (MM/DD)</label><input class="f-o2-bday" placeholder="MM/DD"></div>
+        <div class="drawer-field"><label>Email</label><input class="f-o2-email"></div>
+        <div class="drawer-field"><label>Phone</label><input class="f-o2-phone"></div>
+      </div>
+    </div>
+    <div class="drawer-section">
+      <div class="drawer-section-title">Status & Relationship</div>
+      <div class="drawer-grid">
+        <div class="drawer-field"><label>Relationship Status</label><select class="f-relationship"><option value="">—</option>${selectOpts(RELATIONSHIP_STATUSES, prefill.relationship_status||'Prospect')}</select></div>
+        <div class="drawer-field"><label>Assigned Agent</label><select class="f-assigned-agent">${ASSIGNED_AGENTS.map(a=>`<option ${a==='Jeannette'?'selected':''}>${a}</option>`).join('')}</select></div>
+        <div class="drawer-field"><label>Next Follow-Up</label><input class="f-next-followup" type="date"></div>
+        <div class="drawer-field"><label>Referred By</label><input class="f-referred-by" value="${escapeHtml(prefill.referred_by||'')}" placeholder="Who sent this lead?"></div>
+        <div class="drawer-field" style="grid-column:span 2"><label>Notes</label><textarea class="f-note" rows="2" style="resize:none;">${isLead ? `Referral lead from ${escapeHtml(prefill.referred_by||'')}.` : ''}</textarea></div>
+      </div>
+    </div>
+    <div class="drawer-actions">
+      <button id="addDrawerSaveBtn" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:500;letter-spacing:.06em;padding:9px 28px;border-radius:30px;border:none;background:var(--navy);color:var(--champ);cursor:pointer;flex:1;transition:all .2s;" onmouseover="this.style.background='var(--champ)';this.style.color='var(--navy)'" onmouseout="this.style.background='var(--navy)';this.style.color='var(--champ)'">Add to Dashboard</button>
+      <button onclick="closeEditDrawer()" style="font-family:'Jost',sans-serif;font-size:12px;padding:9px 20px;border-radius:30px;border:1px solid var(--border);background:transparent;color:var(--ink3);cursor:pointer;">Cancel</button>
+    </div>
+  `;
+}
+
+function wireAddDrawerSave(prefill){
+  const btn = document.getElementById('addDrawerSaveBtn');
+  if(!btn) return;
+  btn.addEventListener('click', async () => {
+    const d = document.getElementById('drawerBody');
+    const address = d.querySelector('.f-new-address')?.value?.trim();
+    if(!address){ showToast('Address is required', true); return; }
+    let mls = d.querySelector('.f-new-mls')?.value?.trim();
+    if(!mls) mls = `LEAD-${Date.now()}`;
+    const newRecord = {
+      mls_number: mls,
+      address,
+      city: d.querySelector('.f-new-city')?.value?.trim()||null,
+      role: d.querySelector('.f-new-role')?.value||null,
+      sold_date: d.querySelector('.f-new-solddate')?.value?.trim()||null,
+      lease_end_date: d.querySelector('.f-new-leaseend')?.value?.trim()||null,
+      owner1_name: d.querySelector('.f-o1-name')?.value?.trim()||null,
+      owner1_email: d.querySelector('.f-o1-email')?.value?.trim()||null,
+      owner1_phone: d.querySelector('.f-o1-phone')?.value?.trim()||null,
+      owner1_birthday: d.querySelector('.f-o1-bday')?.value?.trim()||null,
+      owner2_name: d.querySelector('.f-o2-name')?.value?.trim()||null,
+      owner2_email: d.querySelector('.f-o2-email')?.value?.trim()||null,
+      owner2_phone: d.querySelector('.f-o2-phone')?.value?.trim()||null,
+      owner2_birthday: d.querySelector('.f-o2-bday')?.value?.trim()||null,
+      relationship_status: d.querySelector('.f-relationship')?.value||null,
+      assigned_agent: d.querySelector('.f-assigned-agent')?.value||null,
+      referred_by: d.querySelector('.f-referred-by')?.value?.trim()||null,
+      property_status: d.querySelector('.f-prop-status')?.value||null,
+      next_follow_up_date: d.querySelector('.f-next-followup')?.value||null,
+      client_note: d.querySelector('.f-note')?.value?.trim()||null,
+      client_info_status: 'Not Reviewed',
+      client_status: 'NO_RESEARCH',
+      updated_at: new Date().toISOString(),
+    };
+    newRecord.client_name = [newRecord.owner1_name, newRecord.owner2_name].filter(Boolean).join(' & ');
+    newRecord.client_email = [newRecord.owner1_email, newRecord.owner2_email].filter(Boolean).join('; ');
+    btn.disabled = true; btn.textContent = 'Adding…';
+    const { error } = await sb.from(TABLE).insert(newRecord);
+    if(error){ showToast('Could not add — please try again', true); btn.disabled=false; btn.textContent='Add to Dashboard'; return; }
+    records.unshift(newRecord);
+    await addActivityLogEntry(mls, {activity_type:'Record Created', description: newRecord.referred_by ? `Referral lead — referred by ${newRecord.referred_by}.` : 'New client/property record created.', related_property: address});
+    closeEditDrawer();
+    updateStats();
+    renderUpcoming();
+    renderMainView();
+    showToast('Added successfully');
+  });
 }
 
 // ── EDIT DRAWER ────────────────────────────────────────
