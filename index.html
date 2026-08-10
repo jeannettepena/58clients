@@ -177,6 +177,37 @@
   .drawer-field input:focus,.drawer-field select:focus,.drawer-field textarea:focus{border-color:var(--champ);}
   .drawer-actions{display:flex;gap:10px;padding:20px 24px;border-top:1px solid var(--border);background:var(--paper);position:sticky;bottom:0;}
 
+
+  /* GROUPED CLIENT CARDS */
+  .client-group{background:var(--paper);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow-sm);overflow:hidden;position:relative;transition:all .25s;}
+  .client-group::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--champ);opacity:0;transition:opacity .2s;}
+  .client-group:hover::before{opacity:1;}
+  .client-group-head{padding:16px 20px;cursor:pointer;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;transition:background .2s;}
+  .client-group-head:hover{background:var(--cream);}
+  .cg-name{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;color:var(--navy);line-height:1.2;}
+  .cg-meta{font-size:11px;color:var(--ink3);margin-top:3px;font-family:'Jost',sans-serif;}
+  .cg-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;}
+  .cg-count{font-size:10px;font-weight:500;letter-spacing:.08em;background:var(--navy);color:var(--champ);padding:3px 10px;border-radius:20px;font-family:'Jost',sans-serif;}
+  .cg-chevron{transition:transform .25s;color:var(--ink4);}
+  .client-group.expanded .cg-chevron{transform:rotate(180deg);}
+  .cg-properties{display:none;border-top:1px solid var(--border);}
+  .client-group.expanded .cg-properties{display:block;}
+  .cg-prop-row{display:flex;align-items:center;gap:12px;padding:11px 20px;border-bottom:1px solid var(--border);transition:background .15s;}
+  .cg-prop-row:last-child{border-bottom:none;}
+  .cg-prop-row:hover{background:var(--cream);}
+  .cg-prop-dot{width:6px;height:6px;border-radius:50%;background:var(--champ);flex-shrink:0;}
+  .cg-prop-dot.sold{background:var(--teal);}
+  .cg-prop-dot.lease{background:var(--champ-2);}
+  .cg-prop-dot.active{background:#5E887E;}
+  .cg-prop-addr{font-size:13px;font-family:'Jost',sans-serif;font-weight:400;color:var(--ink);flex:1;}
+  .cg-prop-type{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink4);font-family:'Jost',sans-serif;white-space:nowrap;}
+  .cg-prop-date{font-size:11px;color:var(--ink3);white-space:nowrap;font-family:'Jost',sans-serif;}
+  .cg-prop-edit{font-size:10px;padding:2px 10px;border-radius:20px;border:none;background:var(--navy);color:var(--champ);cursor:pointer;font-family:'Jost',sans-serif;font-weight:500;white-space:nowrap;opacity:0;transition:opacity .15s;}
+  .cg-prop-row:hover .cg-prop-edit{opacity:1;}
+  .view-toggle{display:flex;gap:6px;align-items:center;}
+  .view-toggle-btn{font-size:11px;padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--paper);color:var(--ink3);cursor:pointer;font-family:'Jost',sans-serif;transition:all .2s;display:flex;align-items:center;gap:5px;}
+  .view-toggle-btn.on{background:var(--navy);border-color:var(--navy);color:var(--champ);}
+
   /* STATUS COLORS */
   .status-active{background:#E8F5E9;color:#2E7D32;}
   .status-prospect{background:var(--champ-wash);color:#8B6914;}
@@ -265,7 +296,19 @@
 
 <div class="stats-row ui" id="stats"></div>
 
-<div class="quickviews ui" id="quickviews"></div>
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:12px 6vw 0;max-width:1180px;margin:0 auto;">
+  <div class="view-toggle" id="viewToggle">
+    <button class="view-toggle-btn on" id="btnGrouped" onclick="setViewMode('grouped')">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      By Client
+    </button>
+    <button class="view-toggle-btn" id="btnAll" onclick="setViewMode('all')">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      All Records
+    </button>
+  </div>
+  <div class="quickviews ui" id="quickviews"></div>
+</div>
 
 <div class="controls" id="controlsBar">
   <div class="search-wrap">
@@ -973,9 +1016,10 @@ function render(){
   document.getElementById('resultCount').textContent = `Showing ${filtered.length} of ${records.length} clients`;
 
   if(filtered.length === 0 && !addingNew){
-    list.innerHTML = '<div class="empty-state">No matches. Try a different search term or filter.</div>';
+    list.innerHTML = '<div class="empty-state"><h3>No matches</h3><p>Try a different search or filter.</p></div>';
     return;
   }
+  if(viewMode === 'grouped' && !addingNew){ renderGrouped(filtered); return; }
 
   const cardsHtml = filtered.map(r=>{
     if(r.mls_number === editingMls) return renderEditCard(r);
@@ -1937,6 +1981,85 @@ document.getElementById('importFileInput').addEventListener('change', (e)=>{
 });
 
 loadData();
+
+
+// ── GROUPED VIEW ───────────────────────────────────────
+let viewMode = 'grouped';
+
+function setViewMode(mode){
+  viewMode = mode;
+  document.getElementById('btnGrouped').classList.toggle('on', mode==='grouped');
+  document.getElementById('btnAll').classList.toggle('on', mode==='all');
+  render();
+}
+
+function groupClients(recs){
+  const groups = new Map();
+  recs.forEach(r => {
+    // Group by email first, then by normalized name
+    const key = r.owner1_email?.toLowerCase().trim() || 
+                r.owner1_name?.toLowerCase().trim().replace(/\s+/g,' ') || 
+                r.mls_number;
+    if(!groups.has(key)){
+      groups.set(key, { key, name: r.owner1_name||r.address||'—', email: r.owner1_email||'', phone: r.owner1_phone||'', properties: [] });
+    }
+    groups.get(key).properties.push(r);
+  });
+  // Sort each group's properties by date desc
+  groups.forEach(g => {
+    g.properties.sort((a,b) => {
+      const da = a.sold_date ? new Date(a.sold_date) : new Date(0);
+      const db = b.sold_date ? new Date(b.sold_date) : new Date(0);
+      return db - da;
+    });
+  });
+  return Array.from(groups.values()).sort((a,b) => a.name.localeCompare(b.name));
+}
+
+function renderGrouped(list){
+  const groups = groupClients(list);
+  if(!groups.length){
+    list.innerHTML = '<div class="empty-state"><h3>No clients found</h3><p>Try a different search or filter.</p></div>';
+    return;
+  }
+  const el = document.getElementById('list');
+  el.innerHTML = `<div class="client-grid">${groups.map(g => {
+    const latest = g.properties[0];
+    const dotClass = latest?.transaction_type?.toLowerCase().includes('rent') ? 'lease' : 'sold';
+    const propCount = g.properties.length;
+    return `<div class="client-group" id="cg-${encodeURIComponent(g.key)}">
+      <div class="client-group-head" onclick="toggleGroup('${encodeURIComponent(g.key)}')">
+        <div>
+          <div class="cg-name">${escapeHtml(g.name)}</div>
+          <div class="cg-meta">${g.email ? escapeHtml(g.email) + ' · ' : ''}${g.phone ? escapeHtml(g.phone) : ''}</div>
+        </div>
+        <div class="cg-right">
+          <span class="cg-count">${propCount} ${propCount===1?'property':'properties'}</span>
+          <svg class="cg-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+      <div class="cg-properties">
+        ${g.properties.map(p => {
+          const isLease = p.transaction_type?.toLowerCase().includes('rent');
+          const dateLabel = isLease ? (p.lease_end_date ? 'Expires ' + p.lease_end_date : 'Lease') : (p.sold_date ? 'Closed ' + p.sold_date : '—');
+          const dot = isLease ? 'lease' : 'sold';
+          return `<div class="cg-prop-row">
+            <div class="cg-prop-dot ${dot}"></div>
+            <div class="cg-prop-addr">${escapeHtml(p.address||'—')}</div>
+            <div class="cg-prop-type">${escapeHtml(p.transaction_type||'')}</div>
+            <div class="cg-prop-date">${escapeHtml(dateLabel)}</div>
+            <button class="cg-prop-edit" onclick="event.stopPropagation();openEditDrawer('${escapeHtml(p.mls_number)}')">Edit</button>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function toggleGroup(key){
+  const el = document.getElementById('cg-' + key);
+  if(el) el.classList.toggle('expanded');
+}
 
 // ── EDIT DRAWER ────────────────────────────────────────
 function openEditDrawer(mls){
