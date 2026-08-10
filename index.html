@@ -242,6 +242,15 @@
   .ck-label{font-size:13px;flex:1;font-family:'Jost',sans-serif;font-weight:300;}
   .ck-item.done .ck-label{color:var(--ink3);text-decoration:line-through;}
 
+
+  .filter-group{border-bottom:1px solid var(--border);padding:6px 0;}
+  .filter-group:last-child{border-bottom:none;}
+  .filter-group-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;cursor:pointer;font-family:'Jost',sans-serif;font-size:11px;font-weight:500;letter-spacing:.08em;color:var(--ink3);padding:6px 0;text-align:left;transition:color .2s;}
+  .filter-group-toggle:hover{color:var(--ink);}
+  .filter-group-toggle svg{transition:transform .25s;flex-shrink:0;}
+  .filter-group-toggle.open{color:var(--champ);}
+  .filter-group-toggle.open svg{transform:rotate(180deg);}
+
   /* FILTER CHIPS */
   .filter-row{margin:8px 6vw 0;display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
   .fchip{background:transparent;border:1px solid var(--border);color:var(--ink3);font-size:11px;letter-spacing:.06em;font-family:'Jost',sans-serif;padding:5px 12px;border-radius:30px;cursor:pointer;transition:all .2s;font-weight:400;}
@@ -343,17 +352,38 @@
     Filters
   </button>
 </div>
-<div id="filterRows" style="display:none;">
-  <div class="filter-row" id="filterRowInfo"></div>
-  <div class="filter-row" id="filterRowRelationship"></div>
-  <div class="filter-row" id="filterRowType"></div>
-  <div class="filter-row" id="filterRowPropStatus"></div>
+<div id="filterRows" style="display:none;margin-top:10px;">
+  <div class="filter-group">
+    <button class="filter-group-toggle" onclick="toggleFilterGroup('filterRowInfo',this)">
+      <span>Info Status</span>
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <div class="filter-row" id="filterRowInfo" style="display:none;padding-top:6px;"></div>
+  </div>
+  <div class="filter-group">
+    <button class="filter-group-toggle" onclick="toggleFilterGroup('filterRowRelationship',this)">
+      <span>Relationship</span>
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <div class="filter-row" id="filterRowRelationship" style="display:none;padding-top:6px;"></div>
+  </div>
+  <div class="filter-group">
+    <button class="filter-group-toggle" onclick="toggleFilterGroup('filterRowType',this)">
+      <span>Client Type</span>
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <div class="filter-row" id="filterRowType" style="display:none;padding-top:6px;"></div>
+  </div>
+  <div class="filter-group">
+    <button class="filter-group-toggle" onclick="toggleFilterGroup('filterRowPropStatus',this)">
+      <span>Property Status</span>
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <div class="filter-row" id="filterRowPropStatus" style="display:none;padding-top:6px;"></div>
+  </div>
 </div>
 
-<div class="result-count ui" id="resultCountWrap">
-  <span id="resultCount"></span>
-  <span id="sortWrap"></span>
-</div>
+<div id="resultCountWrap" style="display:none;"><span id="resultCount"></span><span id="sortWrap"></span></div>
 
 <div class="list" id="list"><div class="loading">Loading your clients…</div></div>
 
@@ -2005,6 +2035,14 @@ document.getElementById('importFileInput').addEventListener('change', (e)=>{
 loadData();
 
 
+
+
+function toggleFilterGroup(id, btn){
+  const row = document.getElementById(id);
+  const isOpen = row.style.display !== 'none';
+  row.style.display = isOpen ? 'none' : 'flex';
+  btn.classList.toggle('open', !isOpen);
+}
 
 function toggleFilters(){
   const rows = document.getElementById('filterRows');
