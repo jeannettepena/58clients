@@ -112,7 +112,7 @@
   .pill-team{background:var(--champ-wash);color:var(--navy);font-size:10px;letter-spacing:.06em;padding:3px 10px;border-radius:20px;white-space:nowrap;font-family:'Jost',sans-serif;}
 
   /* CLIENT CARDS */
-  .client-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;padding:16px 6vw 40px;max-width:1180px;margin:0 auto;}
+  .client-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;padding:16px 0 40px;}
   .client-card{background:var(--paper);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;box-shadow:var(--shadow-sm);cursor:pointer;transition:all .25s;position:relative;overflow:hidden;}
   .client-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--champ);opacity:0;transition:opacity .2s;}
   .client-card:hover{border-color:var(--champ);box-shadow:var(--shadow);transform:translateY(-2px);}
@@ -130,7 +130,7 @@
   .cc-av{width:26px;height:26px;border-radius:50%;background:var(--navy);color:var(--champ);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;font-family:'Jost',sans-serif;}
 
   /* TABLE (The List / Referrals) */
-  .thelist-table{margin:0 6vw 60px;border-collapse:collapse;width:calc(100% - 12vw);font-family:'Jost',sans-serif;font-size:12.5px;background:var(--paper);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow-sm);}
+  .thelist-table{margin:0 0 60px;border-collapse:collapse;width:100%;font-family:'Jost',sans-serif;font-size:12.5px;background:var(--paper);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow-sm);}
   .thelist-table th{background:var(--navy);color:var(--champ);text-align:left;padding:10px 14px;font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-weight:500;}
   .thelist-table td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:top;}
   .thelist-table tr:hover td{background:var(--cream);}
@@ -177,6 +177,16 @@
   .drawer-field input:focus,.drawer-field select:focus,.drawer-field textarea:focus{border-color:var(--champ);}
   .drawer-actions{display:flex;gap:10px;padding:20px 24px;border-top:1px solid var(--border);background:var(--paper);position:sticky;bottom:0;}
 
+
+  /* LAYOUT */
+  .page-wrap{max-width:1180px;margin:0 auto;padding:0 6vw;}
+  .page-wrap .client-grid{padding-left:0;padding-right:0;}
+  .page-wrap .upcoming-panel{margin-left:0;margin-right:0;}
+  .page-wrap .filter-row{margin-left:0;margin-right:0;}
+  .page-wrap .controls{margin-left:0;margin-right:0;}
+  .page-wrap .quickviews{margin-left:0;margin-right:0;}
+  .page-wrap .stats-row{padding-left:0;padding-right:0;}
+  .page-wrap .thelist-table{margin-left:0;margin-right:0;width:100%;}
 
   /* GROUPED CLIENT CARDS */
   .client-group{background:var(--paper);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow-sm);overflow:hidden;position:relative;transition:all .25s;}
@@ -256,13 +266,14 @@
   .verif.ok{background:#E8F5E9;color:#2E7D32;}
 
   /* REFERRALS */
-  .app-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px 6vw;}
+  .app-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px 0;}
   .app-av{width:40px;height:40px;border-radius:50%;background:var(--champ-wash);color:var(--navy);display:flex;align-items:center;justify-content:center;font-weight:500;font-size:12px;flex-shrink:0;font-family:'Jost',sans-serif;}
   .app-card{background:var(--paper);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow-sm);cursor:pointer;transition:all .2s;}
   .app-card:hover{border-color:var(--champ);transform:translateY(-1px);}
 
   /* TWO COL */
   .two{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  @media(max-width:960px){.client-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
   @media(max-width:600px){.two{grid-template-columns:1fr;}.client-grid{grid-template-columns:1fr;}.app-grid{grid-template-columns:1fr;}}
 
   /* EMPTY STATE */
@@ -294,9 +305,9 @@
 
 <div class="upcoming-panel ui" id="upcoming"></div>
 
-<div class="stats-row ui" id="stats"></div>
+</div><div class="page-wrap"><div class="stats-row ui" id="stats"></div>
 
-<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:12px 6vw 0;max-width:1180px;margin:0 auto;">
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:12px;">
   <div class="view-toggle" id="viewToggle">
     <button class="view-toggle-btn on" id="btnGrouped" onclick="setViewMode('grouped')">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
