@@ -309,13 +309,17 @@
 
 <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:12px;">
   <div class="view-toggle" id="viewToggle">
-    <button class="view-toggle-btn on" id="btnGrouped" onclick="setViewMode('grouped')">
+    <button class="view-toggle-btn on" id="btnAll" onclick="setViewMode('all')">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      All Records
+    </button>
+    <button class="view-toggle-btn" id="btnGrouped" onclick="setViewMode('grouped')">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
       By Client
     </button>
-    <button class="view-toggle-btn" id="btnAll" onclick="setViewMode('all')">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-      All Records
+    <button class="view-toggle-btn" id="btnProperty" onclick="setViewMode('property')">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      By Property
     </button>
   </div>
   <div class="quickviews ui" id="quickviews"></div>
@@ -1031,6 +1035,7 @@ function render(){
     return;
   }
   if(viewMode === 'grouped' && !addingNew){ renderGrouped(filtered); return; }
+  if(viewMode === 'property' && !addingNew){ renderByProperty(filtered); return; }
 
   const cardsHtml = filtered.map(r=>{
     if(r.mls_number === editingMls) return renderEditCard(r);
@@ -1997,10 +2002,12 @@ loadData();
 // ── GROUPED VIEW ───────────────────────────────────────
 let viewMode = 'grouped';
 
+let viewMode = 'all';
 function setViewMode(mode){
   viewMode = mode;
-  document.getElementById('btnGrouped').classList.toggle('on', mode==='grouped');
   document.getElementById('btnAll').classList.toggle('on', mode==='all');
+  document.getElementById('btnGrouped').classList.toggle('on', mode==='grouped');
+  document.getElementById('btnProperty').classList.toggle('on', mode==='property');
   render();
 }
 
@@ -2025,6 +2032,39 @@ function groupClients(recs){
     });
   });
   return Array.from(groups.values()).sort((a,b) => a.name.localeCompare(b.name));
+}
+
+
+function renderByProperty(recs){
+  // Sort by address
+  const sorted = [...recs].sort((a,b) => (a.address||'').localeCompare(b.address||''));
+  const el = document.getElementById('list');
+  el.innerHTML = `<div class="client-grid">${sorted.map(r => {
+    const isLease = r.transaction_type?.toLowerCase().includes('rent');
+    const dateLabel = isLease
+      ? (r.lease_end_date ? 'Lease expires ' + r.lease_end_date : 'Active Lease')
+      : (r.sold_date ? 'Closed ' + r.sold_date : '—');
+    const statusClass = isLease ? 'status-prospect' : 'status-closed';
+    return `<div class="client-card">
+      <div class="cc-top">
+        <div>
+          <div class="cc-name" style="font-size:17px;">${escapeHtml(r.address||'—')}</div>
+          <div class="cc-type">${escapeHtml(r.city||'')}${r.transaction_type?' · '+escapeHtml(r.transaction_type):''}</div>
+        </div>
+        <span class="cc-status ${statusClass}">${isLease?'Lease':'Sale'}</span>
+      </div>
+      <div class="cc-address" style="font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--ink);">${escapeHtml(r.owner1_name||'—')}${r.owner2_name?' & '+escapeHtml(r.owner2_name):''}</div>
+      <div class="cc-meta" style="margin-top:6px;">
+        ${r.mls_number?`<span class="cc-tag">MLS# ${escapeHtml(r.mls_number)}</span>`:''}
+        <span class="cc-tag">${escapeHtml(dateLabel)}</span>
+        ${r.sale_price?`<span class="cc-tag">${escapeHtml(r.sale_price)}</span>`:''}
+      </div>
+      <div class="cc-foot">
+        <div class="cc-next" style="font-size:11px;color:var(--ink3);">${escapeHtml(r.relationship_status||'')}</div>
+        <button onclick="openEditDrawer('${escapeHtml(r.mls_number)}')" style="font-size:10px;padding:3px 12px;border-radius:20px;border:none;background:var(--navy);color:var(--champ);cursor:pointer;font-family:'Jost',sans-serif;font-weight:500;">Edit</button>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
 }
 
 function renderGrouped(list){
