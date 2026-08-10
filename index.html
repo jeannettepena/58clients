@@ -1937,6 +1937,123 @@ document.getElementById('importFileInput').addEventListener('change', (e)=>{
 });
 
 loadData();
+
+// ── EDIT DRAWER ────────────────────────────────────────
+function openEditDrawer(mls){
+  const r = records.find(x => x.mls_number === mls);
+  if(!r) return;
+  document.getElementById('drawerBadge').textContent = r.transaction_type || 'Client';
+  document.getElementById('drawerName').textContent = r.owner1_name || r.address || '—';
+  document.getElementById('drawerSub').textContent = (r.address||'') + (r.city?' · '+r.city:'') + (r.sold_date?' · Closed '+r.sold_date:'');
+  document.getElementById('drawerBody').innerHTML = buildDrawerForm(r);
+  document.getElementById('editDrawer').classList.add('open');
+  document.getElementById('editOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeEditDrawer(){
+  document.getElementById('editDrawer').classList.remove('open');
+  document.getElementById('editOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function buildDrawerForm(r){
+  const selectOpts = (arr, val) => ['', ...arr].map(o => `<option value="${o}" ${o===val?'selected':''}>${o||'—'}</option>`).join('');
+  const mailingIsSame = !r.mailing_address || r.mailing_address === r.address;
+  return `
+    <div class="drawer-section">
+      <div class="drawer-section-title">Client 1</div>
+      <div class="drawer-grid">
+        <div class="drawer-field"><label>Name</label><input class="f-o1-name" value="${escapeHtml(r.owner1_name||'')}"></div>
+        <div class="drawer-field"><label>Birthday (MM/DD)</label><input class="f-o1-bday" value="${escapeHtml(r.owner1_birthday||'')}" placeholder="MM/DD"></div>
+        <div class="drawer-field"><label>Email</label><input class="f-o1-email" value="${escapeHtml(r.owner1_email||'')}"></div>
+        <div class="drawer-field"><label>Phone</label><input class="f-o1-phone" value="${escapeHtml(r.owner1_phone||'')}"></div>
+      </div>
+    </div>
+    <div class="drawer-section">
+      <div class="drawer-section-title">Client 2</div>
+      <div class="drawer-grid">
+        <div class="drawer-field"><label>Name</label><input class="f-o2-name" value="${escapeHtml(r.owner2_name||'')}"></div>
+        <div class="drawer-field"><label>Birthday (MM/DD)</label><input class="f-o2-bday" value="${escapeHtml(r.owner2_birthday||'')}" placeholder="MM/DD"></div>
+        <div class="drawer-field"><label>Email</label><input class="f-o2-email" value="${escapeHtml(r.owner2_email||'')}"></div>
+        <div class="drawer-field"><label>Phone</label><input class="f-o2-phone" value="${escapeHtml(r.owner2_phone||'')}"></div>
+      </div>
+    </div>
+    <div class="drawer-section">
+      <div class="drawer-section-title">Status & Relationship</div>
+      <div class="drawer-grid">
+        <div class="drawer-field"><label>Relationship Status</label><select class="f-rel-status"><option value="">—</option>${selectOpts(RELATIONSHIP_STATUSES, r.relationship_status)}</select></div>
+        <div class="drawer-field"><label>Next Follow-Up</label><input class="f-followup" type="date" value="${escapeHtml(r.next_follow_up_date||'')}"></div>
+        <div class="drawer-field" style="grid-column:span 2"><label>Client Note</label><textarea class="f-client-note" rows="2" style="resize:none;">${escapeHtml(r.client_note||'')}</textarea></div>
+      </div>
+    </div>
+    <div class="drawer-section">
+      <div class="drawer-section-title">Property</div>
+      <div class="drawer-grid">
+        <div class="drawer-field"><label>Address</label><input class="f-address" value="${escapeHtml(r.address||'')}"></div>
+        <div class="drawer-field"><label>City</label><input class="f-city" value="${escapeHtml(r.city||'')}"></div>
+        <div class="drawer-field"><label>Transaction Type</label><input class="f-txn-type" value="${escapeHtml(r.transaction_type||'')}"></div>
+        <div class="drawer-field"><label>Sold / Closed Date</label><input class="f-sold-date" value="${escapeHtml(r.sold_date||'')}"></div>
+        <div class="drawer-field"><label>Sale Price</label><input class="f-sale-price" value="${escapeHtml(r.sale_price||'')}"></div>
+        <div class="drawer-field"><label>Property Status</label><select class="f-prop-status"><option value="">—</option>${selectOpts(PROPERTY_STATUSES, r.property_status)}</select></div>
+      </div>
+    </div>
+    <div class="drawer-section">
+      <div class="drawer-section-title">Mailing Address</div>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-family:'Jost',sans-serif;font-size:12px;color:var(--ink3);margin-bottom:12px;">
+        <input type="checkbox" id="mailingIsSame" ${mailingIsSame?'checked':''}
+          onchange="document.getElementById('mailingFields').style.display=this.checked?'none':'grid'"
+          style="accent-color:var(--champ);width:15px;height:15px;cursor:pointer;">
+        Same as property address
+      </label>
+      <div id="mailingFields" class="drawer-grid" style="display:${mailingIsSame?'none':'grid'}">
+        <div class="drawer-field" style="grid-column:span 2"><label>Street</label><input class="f-mailing-address" value="${escapeHtml(r.mailing_address||'')}"></div>
+        <div class="drawer-field"><label>City</label><input class="f-mailing-city" value="${escapeHtml(r.mailing_city||'')}"></div>
+        <div class="drawer-field"><label>State</label><input class="f-mailing-state" value="${escapeHtml(r.mailing_state||'TX')}" placeholder="TX"></div>
+        <div class="drawer-field"><label>ZIP</label><input class="f-mailing-zip" value="${escapeHtml(r.mailing_zip||'')}"></div>
+      </div>
+    </div>
+    <div class="drawer-actions">
+      <button onclick="saveDrawer('${escapeHtml(r.mls_number)}')" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:500;letter-spacing:.06em;padding:9px 28px;border-radius:30px;border:none;background:var(--navy);color:var(--champ);cursor:pointer;flex:1;transition:all .2s;" onmouseover="this.style.background='var(--champ)';this.style.color='var(--navy)'" onmouseout="this.style.background='var(--navy)';this.style.color='var(--champ)'">Save</button>
+      <button onclick="closeEditDrawer()" style="font-family:'Jost',sans-serif;font-size:12px;padding:9px 20px;border-radius:30px;border:1px solid var(--border);background:transparent;color:var(--ink3);cursor:pointer;">Cancel</button>
+    </div>
+  `;
+}
+
+async function saveDrawer(mls){
+  const r = records.find(x => x.mls_number === mls);
+  if(!r) return;
+  const d = document.getElementById('drawerBody');
+  const same = d.querySelector('#mailingIsSame')?.checked;
+  const updates = {
+    owner1_name: d.querySelector('.f-o1-name')?.value?.trim()||null,
+    owner1_email: d.querySelector('.f-o1-email')?.value?.trim()||null,
+    owner1_phone: d.querySelector('.f-o1-phone')?.value?.trim()||null,
+    owner1_birthday: d.querySelector('.f-o1-bday')?.value?.trim()||null,
+    owner2_name: d.querySelector('.f-o2-name')?.value?.trim()||null,
+    owner2_email: d.querySelector('.f-o2-email')?.value?.trim()||null,
+    owner2_phone: d.querySelector('.f-o2-phone')?.value?.trim()||null,
+    owner2_birthday: d.querySelector('.f-o2-bday')?.value?.trim()||null,
+    relationship_status: d.querySelector('.f-rel-status')?.value||null,
+    next_follow_up_date: d.querySelector('.f-followup')?.value||null,
+    client_note: d.querySelector('.f-client-note')?.value?.trim()||null,
+    address: d.querySelector('.f-address')?.value?.trim()||null,
+    city: d.querySelector('.f-city')?.value?.trim()||null,
+    transaction_type: d.querySelector('.f-txn-type')?.value?.trim()||null,
+    sold_date: d.querySelector('.f-sold-date')?.value?.trim()||null,
+    sale_price: d.querySelector('.f-sale-price')?.value?.trim()||null,
+    property_status: d.querySelector('.f-prop-status')?.value||null,
+    mailing_address: same ? null : (d.querySelector('.f-mailing-address')?.value?.trim()||null),
+    mailing_city: same ? null : (d.querySelector('.f-mailing-city')?.value?.trim()||null),
+    mailing_state: same ? null : (d.querySelector('.f-mailing-state')?.value?.trim()||null),
+    mailing_zip: same ? null : (d.querySelector('.f-mailing-zip')?.value?.trim()||null),
+    updated_at: new Date().toISOString(),
+  };
+  Object.assign(r, updates);
+  const { error } = await sb.from(TABLE).update(updates).eq('mls_number', mls);
+  if(!error){ closeEditDrawer(); render(); }
+  else { alert('Error saving — check console'); console.error(error); }
+}
 </script>
 
 
