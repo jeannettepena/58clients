@@ -68,6 +68,10 @@
   .upcoming-title .upcoming-count{font-family:'Jost',sans-serif;font-size:10px;font-weight:500;background:var(--champ-wash);color:var(--navy);padding:2px 8px;border-radius:20px;margin-left:8px;}
   .upcoming-window-label{font-family:'Jost',sans-serif;font-size:12px;color:var(--ink3);}
   .upcoming-window-label select{font-family:'Jost',sans-serif;font-size:12px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;color:var(--ink);background:#fff;margin-left:4px;}
+  .btn-pill{font-family:'Jost',sans-serif;font-size:12px;font-weight:500;letter-spacing:.06em;padding:8px 18px;border-radius:30px;border:1px solid var(--border);background:var(--paper);color:var(--ink3);cursor:pointer;transition:all .2s;}
+  .btn-pill:hover{border-color:var(--champ);color:var(--navy);}
+  .btn-pill.primary{background:var(--navy);color:var(--champ);border-color:var(--navy);}
+  .btn-pill.primary:hover{background:var(--champ);color:var(--navy);border-color:var(--champ);}
   .upcoming-empty{font-family:'Jost',sans-serif;font-size:12px;color:var(--ink4);font-style:italic;padding:4px 0;}
   .upcoming-list{display:flex;flex-direction:column;gap:5px;}
   .upcoming-row{display:flex;align-items:center;gap:10px;font-family:'Jost',sans-serif;font-size:12px;color:var(--ink);background:var(--cream);border:1px solid var(--border);border-radius:8px;padding:8px 12px;transition:border-color .2s;}
@@ -250,9 +254,9 @@
     <input type="text" id="search" placeholder="Search by name, address, city, MLS#, or email…">
   </div>
   <div class="controls-actions" id="controlsActions">
-    <button id="btn-add"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="vertical-align:middle;margin-right:5px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Client / Property</button>
-    <button id="btn-export">Export CSV</button>
-    <button id="btn-import">Import CSV</button>
+    <button class="btn-pill primary ui" id="addNewBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="vertical-align:middle;margin-right:5px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Client / Property</button>
+    <button class="btn-pill ui" id="exportCsvBtn">Export CSV</button>
+    <button class="btn-pill ui" id="importCsvBtn">Import CSV</button>
     <input type="file" id="importFileInput" accept=".csv">
   </div>
 </div>
