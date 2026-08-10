@@ -960,32 +960,40 @@ function render(){
     const repeat = isRepeat(r.client_note);
     const noteHtml = r.client_note ? `<div class="note-row ${repeat?'repeat':''}">${escapeHtml(r.client_note)}</div>` : '';
     const logExpanded = expandedLogMls === r.mls_number;
+    const relStatus = r.relationship_status || '';
+    const statusClass = relStatus === 'Active Client' ? 'status-active' : relStatus === 'Hot Lead' ? 'status-hot' : relStatus === 'Past Client' ? 'status-past' : 'status-prospect';
     return `
-      <div class="card ${repeat ? 'jasso':''}">
-        <div class="card-top">
-          <div class="col-prop">
-            <div class="addr">${escapeHtml(r.address)}</div>
-            <div class="meta">${escapeHtml(r.city||'')} &middot; ${escapeHtml(r.transaction_type||'')} closed ${escapeHtml(r.sold_date||'—')} &middot; MLS# ${escapeHtml(r.mls_number)}</div>
-            ${dateBadgeHtml(r)}
+      <div class="client-card ${repeat ? 'repeat-client':''}">
+        <div class="cc-top">
+          <div>
+            <div class="cc-name">${escapeHtml(r.owner1_name || r.address || '—')}</div>
+            <div class="cc-type">${escapeHtml(r.transaction_type||'')}${r.city ? ' · ' + escapeHtml(r.city) : ''}</div>
           </div>
-          <div class="card-top-right">
-            ${badgesHtml(r)}
-            <button class="edit-btn ui" data-edit="${escapeHtml(r.mls_number)}">Edit</button>
+          <span class="cc-status ${statusClass}">${escapeHtml(relStatus||'Contact')}</span>
+        </div>
+        <div class="cc-address">${escapeHtml(r.address||'')}</div>
+        <div class="cc-meta">
+          ${r.sold_date ? `<span class="cc-tag">Closed ${escapeHtml(r.sold_date)}</span>` : ''}
+          ${r.mls_number ? `<span class="cc-tag">MLS# ${escapeHtml(r.mls_number)}</span>` : ''}
+          ${(typeArr(r)||[]).map(t=>`<span class="cc-tag">${escapeHtml(t)}</span>`).join('')}
+        </div>
+        ${r.client_note ? `<div style="font-size:12px;color:var(--ink3);margin-top:8px;font-style:italic;line-height:1.5;">${escapeHtml(r.client_note)}</div>` : ''}
+        <div class="cc-foot">
+          <div class="cc-next">
+            ${r.next_follow_up_date ? `Next contact <b>${escapeHtml(r.next_follow_up_date)}</b>` : '<span style="color:var(--ink4)">No follow-up set</span>'}
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <button class="log-toggle-btn" style="font-size:10px;padding:3px 10px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--ink3);cursor:pointer;font-family:'Jost',sans-serif;transition:all .2s;" data-log-toggle="${escapeHtml(r.mls_number)}" onmouseover="this.style.borderColor='var(--champ)'" onmouseout="this.style.borderColor='var(--border)'">${logExpanded ? 'Hide' : 'Log'} (${(activityLogs[r.mls_number]||[]).length})</button>
+            <button class="edit-btn" style="font-size:10px;padding:3px 12px;border-radius:20px;border:none;background:var(--navy);color:var(--champ);cursor:pointer;font-family:'Jost',sans-serif;font-weight:500;" data-edit="${escapeHtml(r.mls_number)}">Edit</button>
           </div>
         </div>
-        <div class="owners">
-          ${ownerBlockHtml(r.owner1_name, r.owner1_email, r.owner1_phone, r.owner1_birthday, 'Client 1')}
-          ${ownerBlockHtml(r.owner2_name, r.owner2_email, r.owner2_phone, r.owner2_birthday, 'Client 2')}
-        </div>
-        ${noteHtml}
-        ${followUpRowHtml(r)}
-        <button class="log-toggle-btn" data-log-toggle="${escapeHtml(r.mls_number)}">${logExpanded ? 'Hide' : 'View'} Activity Log (${(activityLogs[r.mls_number]||[]).length})</button>
-        ${logExpanded ? `<div class="activity-log">${activityLogHtml(r.mls_number)}</div>` : ''}
+        ${logExpanded ? `<div class="activity-log" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">${activityLogHtml(r.mls_number)}</div>` : ''}
+        ${r.owner2_name ? `<div style="font-size:11px;color:var(--ink3);margin-top:6px;padding-top:6px;border-top:1px solid var(--border);">${escapeHtml(r.owner2_name)}</div>` : ''}
       </div>
     `;
   }).join('');
 
-  list.innerHTML = (addingNew ? renderNewCard() : '') + cardsHtml;
+  list.innerHTML = `<div class="client-grid">${(addingNew ? renderNewCard() : "") + cardsHtml}</div>`;
 
   list.querySelectorAll('[data-edit]').forEach(btn=>{
     btn.addEventListener('click', ()=>{
