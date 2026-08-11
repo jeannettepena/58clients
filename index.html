@@ -2552,6 +2552,10 @@ async function saveDrawer(mls){
     lease_end_date: d.querySelector('.f-lease-end')?.value?.trim()||null,
     client_name: (d.querySelector('.f-o1-name')?.value?.trim()||'') + (d.querySelector('.f-o2-name')?.value?.trim() ? ' & ' + d.querySelector('.f-o2-name').value.trim() : ''),
     client_email: d.querySelector('.f-o1-email')?.value?.trim()||null,
+    mailing_address: same ? null : (d.querySelector('.f-mailing-address')?.value?.trim()||null),
+    mailing_city: same ? null : (d.querySelector('.f-mailing-city')?.value?.trim()||null),
+    mailing_state: same ? null : (d.querySelector('.f-mailing-state')?.value?.trim()||null),
+    mailing_zip: same ? null : (d.querySelector('.f-mailing-zip')?.value?.trim()||null),
     updated_at: new Date().toISOString(),
   };
   Object.assign(r, updates);
