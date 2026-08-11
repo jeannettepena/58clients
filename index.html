@@ -1416,65 +1416,73 @@ function renderReferrals(){
     return da - db;
   });
 
-  const addLeadBtnHtml = `<div style="margin:26px 6vw 0;"><button class="btn-pill primary ui" id="addLeadBtn">+ Add Lead</button></div>`;
+  const addLeadBtnHtml = `<button id="addLeadBtn" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:500;letter-spacing:.06em;padding:8px 20px;border-radius:30px;border:none;background:var(--navy);color:var(--champ);cursor:pointer;margin-bottom:4px;">+ Add Lead</button>`;
 
   const filterBtnsHtml = `
-    <div class="thelist-filters" id="referralsFilters" style="margin-top:14px;">
-      <span class="grp-label ui">Follow-Up Status</span>
-      <button class="filter-btn ${filterReferralFollowUp==='all'?'active':''}" data-rfval="all">All (${eligibleAll.length})</button>
-      ${FOLLOWUP_STATUSES.map(s=>`<button class="filter-btn ${filterReferralFollowUp===s?'active':''}" data-rfval="${s}">${s} (${statusCounts[s]})</button>`).join('')}
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="fchip ${filterReferralFollowUp==='all'?'on':''}" data-rfval="all">All (${eligibleAll.length})</button>
+        ${FOLLOWUP_STATUSES.map(s=>`<button class="fchip ${filterReferralFollowUp===s?'on':''}" data-rfval="${s}">${s} (${statusCounts[s]})</button>`).join('')}
+      </div>
+      ${addLeadBtnHtml}
     </div>
-    <div class="thelist-count">Showing ${eligible.length} of ${eligibleAll.length} referrals &amp; leads</div>
   `;
 
   if(!eligibleAll.length){
-    wrap.innerHTML = addLeadBtnHtml + `<div class="empty-state">${term ? 'No matches on Referrals & Leads for that search.' : 'No prospects or referral-sourced leads yet — click "+ Add Lead" above, or one will appear automatically when you set Relationship Status to Prospect / Warm Lead, or Client Type to Referral.'}</div>`;
+    wrap.innerHTML = `<div style="margin-bottom:12px;">${addLeadBtnHtml}</div><div class="empty-state"><h3>No leads yet</h3><p>Add a lead or set Relationship Status to Prospect / Warm Lead.</p></div>`;
     wireAddLeadButton(wrap);
     return;
   }
   if(!eligible.length){
-    wrap.innerHTML = addLeadBtnHtml + filterBtnsHtml + '<div class="empty-state">No records match this Follow-Up Status filter.</div>';
+    wrap.innerHTML = filterBtnsHtml + '<div class="empty-state"><h3>No matches</h3><p>Try a different filter.</p></div>';
     wireAddLeadButton(wrap);
     wireReferralsFilterButtons(wrap);
     return;
   }
 
-  wrap.innerHTML = addLeadBtnHtml + filterBtnsHtml + `
-    <table class="thelist-table">
-      <thead><tr>
-        <th>Client</th><th>Source / Property</th><th>Referred By</th><th>Client Type</th><th>Relationship</th><th>Info Status</th>
-        <th>Last Contact</th><th>Next Follow-Up</th><th>Notes</th><th>Assigned</th><th></th>
-      </tr></thead>
-      <tbody>
-        ${eligible.map(r=>`
-          <tr data-mls="${escapeHtml(r.mls_number)}">
-            <td>${escapeHtml(r.owner1_name || 'Name unknown')}</td>
-            <td>${escapeHtml(r.address || 'No linked property')}</td>
-            <td>${escapeHtml(r.referred_by || '—')}</td>
-            <td>${typeArr(r).map(t=>`<span class="role-pill">${escapeHtml(t)}</span>`).join(' ') || '—'}</td>
-            <td><span class="badge ${toneOf(r.relationship_status)}">${escapeHtml(r.relationship_status||'—')}</span></td>
-            <td><span class="badge ${toneOf(r.client_info_status)}">${escapeHtml(r.client_info_status)}</span></td>
-            <td>${escapeHtml(r.last_contact_date||'—')}</td>
-            <td><span class="badge ${toneOf(computeFollowUpStatus(r))}">${escapeHtml(r.next_follow_up_date || computeFollowUpStatus(r))}</span></td>
-            <td style="max-width:180px;">${escapeHtml((r.client_note||'').slice(0,80))}</td>
-            <td>${escapeHtml(r.assigned_agent||'')}</td>
-            <td>
-              <button class="thelist-action-btn" data-logresult="${escapeHtml(r.mls_number)}">Log Result</button>
-              <button class="thelist-link" data-open="${escapeHtml(r.mls_number)}" style="margin-left:8px;">Open</button>
-            </td>
-          </tr>
-          ${logContactMls===r.mls_number && logContactMode==='result' ? logContactFormHtml(r, 'result') : ''}
-        `).join('')}
-      </tbody>
-    </table>
+  wrap.innerHTML = filterBtnsHtml + `
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      ${eligible.map(r=>{
+        const fuStatus = computeFollowUpStatus(r);
+        const fuOverdue = fuStatus === 'Overdue' || fuStatus === 'Due Today';
+        const followDays = r.next_follow_up_date ? Math.round((parseDate(r.next_follow_up_date) - todayDate())/86400000) : null;
+        return `<div class="tl-card" style="background:var(--paper);border:1px solid var(--border);border-radius:var(--r);padding:16px 20px;box-shadow:var(--shadow-sm);">
+          <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:200px;">
+              <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--navy);">${escapeHtml(r.owner1_name||'—')}</div>
+              <div style="font-size:12px;color:var(--ink3);margin-top:2px;">
+                ${r.referred_by?`Referred by <strong>${escapeHtml(r.referred_by)}</strong> · `:''}
+                ${escapeHtml(r.address||'No property yet')}
+              </div>
+              ${r.client_note?`<div style="font-size:11px;color:var(--ink4);margin-top:4px;font-style:italic;">${escapeHtml((r.client_note||'').slice(0,100))}</div>`:''}
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+              ${r.relationship_status?`<span class="fchip on" style="font-size:9px;padding:2px 8px;cursor:default;">${escapeHtml(r.relationship_status)}</span>`:''}
+              <span class="fchip" style="font-size:9px;padding:2px 8px;cursor:default;${fuOverdue?'background:#FFEBEE;border-color:#F3C5C5;color:#C24A3B;':''}">${escapeHtml(fuStatus)}</span>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);flex-wrap:wrap;">
+            <div style="font-size:11px;color:var(--ink3);flex:1;">
+              ${r.last_contact_date?`Last contact: <strong style="color:var(--ink);">${escapeHtml(r.last_contact_date)}</strong>`:'<span style="color:var(--ink4);">No contact logged</span>'}
+              ${followDays!==null?` · Follow-up: <strong style="color:${followDays<0?'#C24A3B':followDays<=3?'var(--champ)':'var(--ink)'};">${followDays<0?'Overdue '+Math.abs(followDays)+'d':followDays===0?'Today':followDays+'d'}</strong>`:''}
+            </div>
+            <div style="display:flex;gap:6px;">
+              <button class="thelist-action-btn" data-logresult="${escapeHtml(r.mls_number)}" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:500;padding:5px 14px;border-radius:20px;border:1px solid var(--border);background:var(--paper);color:var(--ink3);cursor:pointer;">Log Result</button>
+              <button class="thelist-link" data-open="${escapeHtml(r.mls_number)}" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:500;padding:5px 14px;border-radius:20px;border:none;background:var(--navy);color:var(--champ);cursor:pointer;">Open</button>
+            </div>
+          </div>
+          ${logContactMls===r.mls_number && logContactMode==='result' ? '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">' + logContactFormHtml(r, 'result') + '</div>' : ''}
+        </div>`;
+      }).join('')}
+    </div>
   `;
 
+  // Wire filter buttons
+  wrap.querySelectorAll('[data-rfval]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ filterReferralFollowUp = btn.dataset.rfval; renderReferrals(); });
+  });
   wrap.querySelectorAll('[data-logresult]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      logContactMls = btn.dataset.logresult;
-      logContactMode = 'result';
-      renderReferrals();
-    });
+    btn.addEventListener('click', ()=>{ logContactMls = btn.dataset.logresult; logContactMode = 'result'; renderReferrals(); });
   });
   wrap.querySelectorAll('[data-open]').forEach(btn=>{ btn.addEventListener('click', ()=>{ openEditDrawer(btn.dataset.open); }); });
   wireAddLeadButton(wrap);
