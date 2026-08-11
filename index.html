@@ -2267,21 +2267,6 @@ function buildAddDrawerForm(prefill){
   const selectOpts = (arr, val) => ['', ...arr].map(o => `<option value="${o}" ${o===val?'selected':''}>${o||'—'}</option>`).join('');
   return `
     <div class="drawer-section">
-      <div class="drawer-section-title">Property</div>
-      <div class="drawer-grid">
-        <div class="drawer-field" style="grid-column:span 2">
-          <label>Address <span style="color:var(--champ)">*</span></label>
-          <input class="f-new-address" placeholder="123 Main St, or 'Lead — no property yet'" value="${isLead ? 'Lead — no property yet' : ''}">
-        </div>
-        <div class="drawer-field"><label>City</label><input class="f-new-city" placeholder="City"></div>
-        <div class="drawer-field"><label>MLS# (optional)</label><input class="f-new-mls" placeholder="Auto-generated if blank"></div>
-        <div class="drawer-field"><label>Transaction Type</label><select class="f-new-role">${ROLES.map(r=>`<option>${r}</option>`).join('')}</select></div>
-        <div class="drawer-field"><label>Date Closed (MM/DD/YYYY)</label><input class="f-new-solddate" placeholder="MM/DD/YYYY"></div>
-        <div class="drawer-field"><label>Lease Expires (rentals)</label><input class="f-new-leaseend" placeholder="MM/DD/YYYY"></div>
-        <div class="drawer-field"><label>Property Status</label><select class="f-prop-status"><option value="">—</option>${selectOpts(PROPERTY_STATUSES, 'Unknown')}</select></div>
-      </div>
-    </div>
-    <div class="drawer-section">
       <div class="drawer-section-title">Client 1</div>
       <div class="drawer-grid">
         <div class="drawer-field"><label>Name</label><input class="f-o1-name"></div>
@@ -2309,6 +2294,22 @@ function buildAddDrawerForm(prefill){
         <div class="drawer-field" style="grid-column:span 2"><label>Notes</label><textarea class="f-note" rows="2" style="resize:none;">${isLead ? `Referral lead from ${escapeHtml(prefill.referred_by||'')}.` : ''}</textarea></div>
       </div>
     </div>
+    <div class="drawer-section">
+      <div class="drawer-section-title">Property (optional)</div>
+      <div class="drawer-grid">
+        <div class="drawer-field" style="grid-column:span 2">
+          <label>Address</label>
+          <input class="f-new-address" placeholder="123 Main St — leave blank if no property yet" value="">
+        </div>
+        <div class="drawer-field"><label>City</label><input class="f-new-city" placeholder="City"></div>
+        <div class="drawer-field"><label>MLS# (optional)</label><input class="f-new-mls" placeholder="Auto-generated if blank"></div>
+        <div class="drawer-field"><label>Transaction Type</label><select class="f-new-role">${ROLES.map(r=>`<option>${r}</option>`).join('')}</select></div>
+        <div class="drawer-field"><label>Date Closed (MM/DD/YYYY)</label><input class="f-new-solddate" placeholder="MM/DD/YYYY"></div>
+        <div class="drawer-field"><label>Lease Expires (rentals)</label><input class="f-new-leaseend" placeholder="MM/DD/YYYY"></div>
+        <div class="drawer-field"><label>Property Status</label><select class="f-prop-status"><option value="">—</option>${selectOpts(PROPERTY_STATUSES, 'Unknown')}</select></div>
+      </div>
+    </div>
+
     <div class="drawer-actions">
       <button id="addDrawerSaveBtn" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:500;letter-spacing:.06em;padding:9px 28px;border-radius:30px;border:none;background:var(--navy);color:var(--champ);cursor:pointer;flex:1;transition:all .2s;" onmouseover="this.style.background='var(--champ)';this.style.color='var(--navy)'" onmouseout="this.style.background='var(--navy)';this.style.color='var(--champ)'">Add to Dashboard</button>
       <button onclick="closeEditDrawer()" style="font-family:'Jost',sans-serif;font-size:12px;padding:9px 20px;border-radius:30px;border:1px solid var(--border);background:transparent;color:var(--ink3);cursor:pointer;">Cancel</button>
