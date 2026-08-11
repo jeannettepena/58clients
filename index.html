@@ -2500,9 +2500,9 @@ function buildDrawerForm(r){
       <div class="drawer-grid">
         <div class="drawer-field"><label>Address</label><input class="f-address" value="${escapeHtml(r.address||'')}"></div>
         <div class="drawer-field"><label>City</label><input class="f-city" value="${escapeHtml(r.city||'')}"></div>
-        <div class="drawer-field"><label>Transaction Type</label><input class="f-txn-type" value="${escapeHtml(r.transaction_type||'')}"></div>
+        <div class="drawer-field"><label>Lease End Date</label><input class="f-lease-end" value="${escapeHtml(r.lease_end_date||'')}" placeholder="MM/DD/YYYY"></div>
         <div class="drawer-field"><label>Sold / Closed Date</label><input class="f-sold-date" value="${escapeHtml(r.sold_date||'')}"></div>
-        <div class="drawer-field"><label>Sale Price</label><input class="f-sale-price" value="${escapeHtml(r.sale_price||'')}"></div>
+        <div class="drawer-field"><label>Sold Price</label><input class="f-sold-price" value="${escapeHtml(r.sold_price||r.sale_price||'')}"></div>
         <div class="drawer-field"><label>Property Status</label><select class="f-prop-status"><option value="">—</option>${selectOpts(PROPERTY_STATUSES, r.property_status)}</select></div>
       </div>
     </div>
@@ -2547,11 +2547,11 @@ async function saveDrawer(mls){
     client_note: d.querySelector('.f-client-note')?.value?.trim()||null,
     address: d.querySelector('.f-address')?.value?.trim()||null,
     city: d.querySelector('.f-city')?.value?.trim()||null,
-    transaction_type: d.querySelector('.f-txn-type')?.value?.trim()||null,
     sold_date: d.querySelector('.f-sold-date')?.value?.trim()||null,
-    sale_price: d.querySelector('.f-sale-price')?.value?.trim()||null,
     property_status: d.querySelector('.f-prop-status')?.value||null,
-
+    lease_end_date: d.querySelector('.f-lease-end')?.value?.trim()||null,
+    client_name: (d.querySelector('.f-o1-name')?.value?.trim()||'') + (d.querySelector('.f-o2-name')?.value?.trim() ? ' & ' + d.querySelector('.f-o2-name').value.trim() : ''),
+    client_email: d.querySelector('.f-o1-email')?.value?.trim()||null,
     updated_at: new Date().toISOString(),
   };
   Object.assign(r, updates);
