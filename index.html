@@ -2150,7 +2150,8 @@ function renderGrouped(list){
     const relStatus = latest?.relationship_status || '';
     const statusClass = relStatus==='Active Client'?'status-active':relStatus==='Past Client'?'status-past':'status-prospect';
 
-    return `<div class="client-group" id="cg-${gIdx}" onclick="openClientDrawerByIdx(${gIdx})" style="cursor:pointer;">
+    window['_cg_'+gIdx] = g;
+    return `<div class="client-group" id="cg-${gIdx}" onclick="window['_cg_${gIdx}'] && openClientDrawerWithGroup(window['_cg_${gIdx}'])" style="cursor:pointer;">
       <div class="client-group-head">
         <div style="flex:1;min-width:0;">
           <div class="cg-name">${escapeHtml(g.name)}</div>
