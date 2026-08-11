@@ -1221,6 +1221,14 @@ function renderTheList(){
     </div>
   `;
 
+  // Wire filter chips directly
+  wrap.querySelectorAll('[data-tlval]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      filterTheListStatus = btn.dataset.tlval;
+      renderTheList();
+    });
+  });
+
   wrap.querySelectorAll('.the-list-status-sel').forEach(sel=>{
     sel.addEventListener('change', async ()=>{
       const mls = sel.dataset.mls;
@@ -1242,9 +1250,7 @@ function renderTheList(){
       renderTheList();
     });
   });
-  wrap.querySelectorAll('[data-open]').forEach(btn=>{ btn.addEventListener('click', ()=>{ openEditDrawer(btn.dataset.open); }); return;
-    btn.addEventListener('click', ()=> openRecordForEdit(btn.dataset.open));
-  });
+  wrap.querySelectorAll('[data-open]').forEach(btn=>{ btn.addEventListener('click', ()=>{ openEditDrawer(btn.dataset.open); }); });
   wireTheListFilterButtons(wrap);
   wireLogContactForm(wrap, renderTheList);
 }
@@ -1470,9 +1476,7 @@ function renderReferrals(){
       renderReferrals();
     });
   });
-  wrap.querySelectorAll('[data-open]').forEach(btn=>{ btn.addEventListener('click', ()=>{ openEditDrawer(btn.dataset.open); }); return;
-    btn.addEventListener('click', ()=> openRecordForEdit(btn.dataset.open));
-  });
+  wrap.querySelectorAll('[data-open]').forEach(btn=>{ btn.addEventListener('click', ()=>{ openEditDrawer(btn.dataset.open); }); });
   wireAddLeadButton(wrap);
   wireReferralsFilterButtons(wrap);
   wireLogContactForm(wrap, renderReferrals);
