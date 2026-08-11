@@ -2131,7 +2131,7 @@ function renderGrouped(list){
     return;
   }
   const el = document.getElementById('list');
-  el.innerHTML = `<div class="client-grid">${groups.map(g => {
+  el.innerHTML = `<div class="client-grid">${groups.map((g, gIdx) => {
     const propCount = g.properties.length;
     // Latest property info
     const latest = g.properties[0];
@@ -2150,7 +2150,7 @@ function renderGrouped(list){
     const relStatus = latest?.relationship_status || '';
     const statusClass = relStatus==='Active Client'?'status-active':relStatus==='Past Client'?'status-past':'status-prospect';
 
-    return `<div class="client-group" id="cg-${encodeURIComponent(g.key)}" onclick="openClientDrawer('${encodeURIComponent(g.key)}')" style="cursor:pointer;">
+    return `<div class="client-group" id="cg-${gIdx}" onclick="openClientDrawerByIdx(${gIdx})" style="cursor:pointer;">
       <div class="client-group-head">
         <div style="flex:1;min-width:0;">
           <div class="cg-name">${escapeHtml(g.name)}</div>
@@ -2311,10 +2311,19 @@ function wireAddDrawerSave(prefill){
 
 
 // ── CLIENT PROFILE DRAWER ─────────────────────────────
+function openClientDrawerByIdx(idx){
+  const group = _lastGroups[idx];
+  if(!group){ console.warn('No group at index', idx, _lastGroups); return; }
+  openClientDrawerWithGroup(group);
+}
+
 function openClientDrawer(groupKey){
   const group = groupClients(records).find(g => g.key === decodeURIComponent(groupKey));
   if(!group) return;
+  openClientDrawerWithGroup(group);
+}
 
+function openClientDrawerWithGroup(group){
   document.getElementById('clientDrawerBadge').textContent = group.properties.length + ' ' + (group.properties.length === 1 ? 'property' : 'properties');
   document.getElementById('clientDrawerName').textContent = group.name;
   document.getElementById('clientDrawerSub').textContent = [group.email, group.phone].filter(Boolean).join(' · ') || 'No contact info';
