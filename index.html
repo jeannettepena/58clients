@@ -1491,7 +1491,7 @@ function renderReferrals(){
 }
 function wireAddLeadButton(wrap){
   const btn = wrap.querySelector('#addLeadBtn');
-  if(btn) btn.addEventListener('click', ()=> openAddLead({ relationship_status:'Warm Lead' }));
+  if(btn) btn.addEventListener('click', ()=> openAddDrawer({relationship_status:'Prospect'}));
 }
 function wireReferralsFilterButtons(wrap){
   wrap.querySelectorAll('#referralsFilters .filter-btn').forEach(btn=>{
