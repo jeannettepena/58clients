@@ -2132,8 +2132,6 @@ function renderGrouped(list){
   }
   const el = document.getElementById('list');
   el.innerHTML = `<div class="client-grid">${groups.map(g => {
-    const latest = g.properties[0];
-    const dotClass = latest?.transaction_type?.toLowerCase().includes('rent') ? 'lease' : 'sold';
     const propCount = g.properties.length;
     // Latest property info
     const latest = g.properties[0];
