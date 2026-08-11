@@ -2686,16 +2686,14 @@ async function saveDrawer(mls){
   else { alert('Error saving — check console'); console.error(error); }
 }
 
-// Wire static Add Lead button — after all functions defined
-var _addLeadStatic = document.getElementById('addLeadBtnStatic');
-if(_addLeadStatic){
-  _addLeadStatic.addEventListener('click', function(e){
-    alert('Add Lead clicked! openAddDrawer exists: ' + (typeof openAddDrawer));
+// Wire static Add Lead button
+document.getElementById('addLeadBtnStatic').addEventListener('click', function(){
+  try {
     openAddDrawer({relationship_status:'Prospect'});
-  });
-} else {
-  alert('addLeadBtnStatic not found in DOM');
-}
+  } catch(err) {
+    alert('Error: ' + err.message);
+  }
+});
 </script>
 
 <!-- EDIT DRAWER -->
