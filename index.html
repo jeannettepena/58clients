@@ -1166,12 +1166,11 @@ function renderTheList(){
 
   const filterBtnsHtml = `
     <div class="thelist-filters" id="thelistFilters">
-      <span class="grp-label ui">The List Status</span>
-      <button class="filter-btn ${filterTheListStatus==='all'?'active':''}" data-tlval="all">All (${eligibleAll.length})</button>
-      <button class="filter-btn ${filterTheListStatus==='__blank__'?'active':''}" data-tlval="__blank__">Not Set (${statusCounts['__blank__']})</button>
-      ${THE_LIST_STATUSES.map(s=>`<button class="filter-btn ${filterTheListStatus===s?'active':''}" data-tlval="${s}">${s} (${statusCounts[s]})</button>`).join('')}
+      <button class="fchip ${filterTheListStatus==='all'?'on':''}" data-tlval="all">All (${eligibleAll.length})</button>
+      <button class="fchip ${filterTheListStatus==='__blank__'?'on':''}" data-tlval="__blank__">Not Set (${statusCounts['__blank__']})</button>
+      ${THE_LIST_STATUSES.map(s=>`<button class="fchip ${filterTheListStatus===s?'on':''}" data-tlval="${s}">${s} (${statusCounts[s]})</button>`).join('')}
     </div>
-    <div class="thelist-count">Showing ${eligible.length} of ${eligibleAll.length} on The List</div>
+    <div style="font-size:11px;color:var(--ink4);font-family:'Jost',sans-serif;padding:4px 0;">${eligible.length} of ${eligibleAll.length}</div>
   `;
 
   if(!eligibleAll.length){
@@ -1185,40 +1184,41 @@ function renderTheList(){
   }
 
   wrap.innerHTML = filterBtnsHtml + `
-    <table class="thelist-table">
-      <thead><tr>
-        <th>Client</th><th>Property</th><th>Txn Date</th><th>Type</th><th>Last Contact</th><th>Next Follow-Up</th>
-        <th>Info Status</th><th>Relationship</th><th>Annual Review</th><th>Notes</th><th>Assigned</th><th>The List Status</th><th></th>
-      </tr></thead>
-      <tbody>
-        ${eligible.map(r=>`
-          <tr data-mls="${escapeHtml(r.mls_number)}">
-            <td>${escapeHtml(r.owner1_name || 'Name unknown')}</td>
-            <td>${escapeHtml(r.address)}</td>
-            <td>${escapeHtml(r.sold_date||'—')}</td>
-            <td>${escapeHtml(r.transaction_type||'')}</td>
-            <td>${escapeHtml(r.last_contact_date||'—')}</td>
-            <td>${escapeHtml(r.next_follow_up_date||'—')}</td>
-            <td><span class="badge ${toneOf(r.client_info_status)}">${escapeHtml(r.client_info_status)}</span></td>
-            <td><span class="badge ${toneOf(r.relationship_status)}">${escapeHtml(r.relationship_status)}</span></td>
-            <td>${escapeHtml(r.annual_review_status||'Not Applicable')}</td>
-            <td style="max-width:180px;">${escapeHtml((r.client_note||'').slice(0,80))}</td>
-            <td>${escapeHtml(r.assigned_agent||'')}</td>
-            <td>
-              <select class="the-list-status-sel" data-mls="${escapeHtml(r.mls_number)}">
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;">
+      ${eligible.map(r=>{
+        const followDays = r.next_follow_up_date ? Math.round((parseDate(r.next_follow_up_date) - todayDate())/86400000) : null;
+        const followUrgent = followDays !== null && followDays <= 7;
+        const followOverdue = followDays !== null && followDays < 0;
+        return `<div class="tl-card" data-mls="${escapeHtml(r.mls_number)}" style="background:var(--paper);border:1px solid var(--border);border-radius:var(--r);padding:16px 20px;box-shadow:var(--shadow-sm);transition:border-color .2s;">
+          <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:200px;">
+              <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--navy);font-weight:400;">${escapeHtml(r.owner1_name||'—')}</div>
+              <div style="font-size:12px;color:var(--ink3);margin-top:2px;">${escapeHtml(r.address||'')}${r.city?' · '+escapeHtml(r.city):''}</div>
+              ${r.client_note ? `<div style="font-size:11px;color:var(--ink4);margin-top:4px;font-style:italic;">${escapeHtml((r.client_note||'').slice(0,100))}${(r.client_note||'').length>100?'…':''}</div>` : ''}
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+              ${r.relationship_status ? `<span class="fchip on" style="font-size:9px;padding:2px 8px;cursor:default;">${escapeHtml(r.relationship_status)}</span>` : ''}
+              <select class="the-list-status-sel" data-mls="${escapeHtml(r.mls_number)}" style="font-family:'Jost',sans-serif;font-size:11px;padding:4px 10px;border:1px solid var(--border);border-radius:20px;background:var(--paper);color:var(--ink);outline:none;cursor:pointer;">
                 ${THE_LIST_STATUSES.map(s=>`<option value="${s}" ${r.the_list_status===s?'selected':''}>${s}</option>`).join('')}
-                <option value="" ${!r.the_list_status?'selected':''}>—</option>
+                <option value="" ${!r.the_list_status?'selected':''}>— Set Status —</option>
               </select>
-            </td>
-            <td>
-              <button class="thelist-action-btn" data-logcall="${escapeHtml(r.mls_number)}">Log Call</button>
-              <button class="thelist-link" data-open="${escapeHtml(r.mls_number)}" style="margin-left:8px;">Open</button>
-            </td>
-          </tr>
-          ${logContactMls===r.mls_number && logContactMode==='call' ? logContactFormHtml(r, 'call') : ''}
-        `).join('')}
-      </tbody>
-    </table>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);flex-wrap:wrap;">
+            <div style="font-size:11px;color:var(--ink3);flex:1;">
+              ${r.last_contact_date ? `Last contact: <strong style="color:var(--ink);">${escapeHtml(r.last_contact_date)}</strong>` : '<span style="color:var(--ink4);">No contact logged</span>'}
+              ${followDays !== null ? ` · Follow-up: <strong style="color:${followOverdue?'#C24A3B':followUrgent?'var(--champ)':'var(--ink)'};">${followOverdue?'Overdue '+Math.abs(followDays)+'d':followDays===0?'Today':followDays+'d'}</strong>` : ''}
+              ${r.sold_date ? ` · Closed: ${escapeHtml(r.sold_date)}` : ''}
+            </div>
+            <div style="display:flex;gap:6px;">
+              <button class="thelist-action-btn" data-logcall="${escapeHtml(r.mls_number)}" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:500;padding:5px 14px;border-radius:20px;border:1px solid var(--border);background:var(--paper);color:var(--ink3);cursor:pointer;transition:all .2s;">Log Call</button>
+              <button class="thelist-link" data-open="${escapeHtml(r.mls_number)}" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:500;padding:5px 14px;border-radius:20px;border:none;background:var(--navy);color:var(--champ);cursor:pointer;">Open</button>
+            </div>
+          </div>
+          ${logContactMls===r.mls_number && logContactMode==='call' ? '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">' + logContactFormHtml(r, 'call') + '</div>' : ''}
+        </div>`;
+      }).join('')}
+    </div>
   `;
 
   wrap.querySelectorAll('.the-list-status-sel').forEach(sel=>{
