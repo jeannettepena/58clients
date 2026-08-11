@@ -2205,7 +2205,7 @@ function toggleGroup(key){
 }
 
 
-function openAddDrawer(prefill){
+window.openAddDrawer = function openAddDrawer(prefill){
   prefill = prefill || {};
   const isLead = !!prefill.referred_by;
   document.getElementById('drawerBadge').textContent = isLead ? 'New Referral Lead' : 'New Client / Property';
@@ -2510,7 +2510,7 @@ document.addEventListener('click', function(e){
 });
 
 // ── EDIT DRAWER ────────────────────────────────────────
-function openEditDrawer(mls){
+window.openEditDrawer = function openEditDrawer(mls){
   const r = records.find(x => x.mls_number === mls);
   if(!r) return;
   document.getElementById('drawerBadge').textContent = r.transaction_type || 'Client';
