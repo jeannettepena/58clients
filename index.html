@@ -2473,9 +2473,15 @@ document.addEventListener('click', function(e){
     renderReferrals();
     return;
   }
-  // Add Lead
-  if(e.target.closest('#addLeadBtn') && document.getElementById('referralsWrap')?.contains(e.target)){
+  // Add Lead — catch any click inside or on the button
+  const addLeadEl = e.target.closest('#addLeadBtn');
+  if(addLeadEl){
     openAddDrawer({relationship_status:'Prospect'});
+    return;
+  }
+  // Add Client/Property main button
+  if(e.target.id === 'addNewBtn' || e.target.closest('#addNewBtn')){
+    openAddDrawer({});
     return;
   }
   // Log Result
