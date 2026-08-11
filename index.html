@@ -2321,7 +2321,7 @@ function openClientDrawer(groupKey){
 }
 
 function openClientDrawerWithGroup(group){
-  if(!group){alert("No group data");return;}
+  if(!group) return;
   document.getElementById('clientDrawerBadge').textContent = group.properties.length + ' ' + (group.properties.length === 1 ? 'property' : 'properties');
   document.getElementById('clientDrawerName').textContent = group.name;
   document.getElementById('clientDrawerSub').textContent = [group.email, group.phone].filter(Boolean).join(' · ') || 'No contact info';
@@ -2551,10 +2551,7 @@ async function saveDrawer(mls){
     sold_date: d.querySelector('.f-sold-date')?.value?.trim()||null,
     sale_price: d.querySelector('.f-sale-price')?.value?.trim()||null,
     property_status: d.querySelector('.f-prop-status')?.value||null,
-    mailing_address: same ? null : (d.querySelector('.f-mailing-address')?.value?.trim()||null),
-    mailing_city: same ? null : (d.querySelector('.f-mailing-city')?.value?.trim()||null),
-    mailing_state: same ? null : (d.querySelector('.f-mailing-state')?.value?.trim()||null),
-    mailing_zip: same ? null : (d.querySelector('.f-mailing-zip')?.value?.trim()||null),
+
     updated_at: new Date().toISOString(),
   };
   Object.assign(r, updates);
