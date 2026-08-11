@@ -2690,7 +2690,7 @@ document.getElementById('addLeadBtnStatic').addEventListener('click', function()
   try {
     openAddDrawer({relationship_status:'Prospect'});
   } catch(err) {
-    alert('Error: ' + err.message);
+    alert('Error: ' + err.message + '\n' + err.stack.split('\n').slice(0,3).join('\n'));
   }
 });
 </script>
