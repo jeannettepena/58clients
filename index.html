@@ -2072,6 +2072,8 @@ function setViewMode(mode){
 function groupClients(recs){
   const groups = new Map();
   recs.forEach(r => {
+    // Skip records with no client name
+    if(!r.owner1_name || !r.owner1_name.trim()) return;
     // Group by email first, then by normalized name
     const key = r.owner1_email?.toLowerCase().trim() || 
                 r.owner1_name?.toLowerCase().trim().replace(/\s+/g,' ') || 
@@ -2089,14 +2091,7 @@ function groupClients(recs){
       return db - da;
     });
   });
-  return Array.from(groups.values())
-    .filter(g => g.name && g.name.trim() !== '' && g.name !== '—')
-    .sort((a,b) => {
-      // Named clients first, then by name
-      const aHasName = !!(g => g.email || g.properties[0]?.owner1_name)(a);
-      const bHasName = !!(g => g.email || g.properties[0]?.owner1_name)(b);
-      return a.name.localeCompare(b.name);
-    });
+  return Array.from(groups.values()).sort((a,b) => a.name.localeCompare(b.name));
 }
 
 
