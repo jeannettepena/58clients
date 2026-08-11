@@ -2126,66 +2126,60 @@ function renderByProperty(recs){
 
 function renderGrouped(list){
   const groups = groupClients(list);
+  const el = document.getElementById('list');
   if(!groups.length){
-    list.innerHTML = '<div class="empty-state"><h3>No clients found</h3><p>Try a different search or filter.</p></div>';
+    el.innerHTML = '<div class="empty-state"><h3>No clients found</h3><p>Try a different search or filter.</p></div>';
     return;
   }
-  const el = document.getElementById('list');
   window._cgGroups = groups;
-  el.innerHTML = `<div class="client-grid">${groups.map((g, gIdx) => {
+  const html = ['<div class="client-grid">'];
+  groups.forEach(function(g, gIdx){
     const propCount = g.properties.length;
-    // Latest property info
     const latest = g.properties[0];
-    const hasAnniv = g.properties.some(p => {
-      if(!p.sold_date || (p.transaction_type||'').toLowerCase().includes('rent') || isRentalRole(p.role)) return false;
+    const relStatus = latest ? (latest.relationship_status||'') : '';
+    const statusClass = relStatus==='Active Client'?'status-active':relStatus==='Past Client'?'status-past':'status-prospect';
+    const hasAnniv = g.properties.some(function(p){
+      if(!p.sold_date) return false;
       const d = parseDate(p.sold_date); if(!d) return false;
       const anniv = new Date(todayDate().getFullYear(), d.getMonth(), d.getDate());
       if(anniv < todayDate()) anniv.setFullYear(todayDate().getFullYear()+1);
       return Math.round((anniv - todayDate())/86400000) <= 30;
     });
-    const hasLeaseAlert = g.properties.some(p => {
+    const hasLeaseAlert = g.properties.some(function(p){
       if(!p.lease_end_date) return false;
       const d = parseDate(p.lease_end_date); if(!d) return false;
       return Math.round((d - todayDate())/86400000) <= 60;
     });
-    const relStatus = latest?.relationship_status || '';
-    const statusClass = relStatus==='Active Client'?'status-active':relStatus==='Past Client'?'status-past':'status-prospect';
+    html.push('<div class="client-group" id="cg-' + gIdx + '">');
+    html.push('<div class="client-group-head">');
+    html.push('<div style="flex:1;min-width:0;">');
+    html.push('<div class="cg-name">' + escapeHtml(g.name) + '</div>');
+    if(g.email || g.phone){
+      html.push('<div class="cg-meta" style="margin-top:3px;">' + escapeHtml([g.email,g.phone].filter(Boolean).join(' · ')) + '</div>');
+    }
+    html.push('<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">');
+    if(relStatus) html.push('<span class="cc-status ' + statusClass + '" style="font-size:9px;padding:2px 8px;">' + escapeHtml(relStatus) + '</span>');
+    html.push('<span class="cg-count">' + propCount + ' ' + (propCount===1?'property':'properties') + '</span>');
+    if(hasAnniv) html.push('<span style="font-size:9px;padding:2px 8px;border-radius:20px;background:var(--champ-wash);color:var(--navy);font-weight:500;">Anniversary soon</span>');
+    if(hasLeaseAlert) html.push('<span style="font-size:9px;padding:2px 8px;border-radius:20px;background:#FFEBEE;color:#C62828;font-weight:500;">Lease alert</span>');
+    html.push('</div>');
+    html.push('</div>');
+    html.push('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="flex-shrink:0;color:var(--ink4);"><polyline points="9 18 15 12 9 6"/></svg>');
+    html.push('</div>'); // end head
+    html.push('</div>'); // end client-group
+  });
+  html.push('</div>');
+  el.innerHTML = html.join('');
 
-    return `<div class="client-group" id="cg-${gIdx}" data-cgidx="${gIdx}" style="cursor:pointer;">
-      <div class="client-group-head" onclick="if(!event.target.closest('button')){var g=window._cgGroups[${gIdx}];if(g)openClientDrawerWithGroup(g);}">
-        <div style="flex:1;min-width:0;">
-          <div class="cg-name">${escapeHtml(g.name)}</div>
-          <div class="cg-meta" style="margin-top:3px;">
-            ${g.email ? `<span style="color:var(--ink3);">${escapeHtml(g.email)}</span>` : ''}
-            ${g.email && g.phone ? ' · ' : ''}
-            ${g.phone ? `<span style="color:var(--ink3);">${escapeHtml(g.phone)}</span>` : ''}
-          </div>
-          <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-            ${relStatus ? `<span class="cc-status ${statusClass}" style="font-size:9px;padding:2px 8px;">${escapeHtml(relStatus)}</span>` : ''}
-            <span class="cg-count">${propCount} ${propCount===1?'property':'properties'}</span>
-            ${hasAnniv ? `<span style="font-size:9px;padding:2px 8px;border-radius:20px;background:var(--champ-wash);color:var(--navy);font-family:'Jost',sans-serif;font-weight:500;">Anniversary soon</span>` : ''}
-            ${hasLeaseAlert ? `<span style="font-size:9px;padding:2px 8px;border-radius:20px;background:#FFEBEE;color:#C62828;font-family:'Jost',sans-serif;font-weight:500;">Lease alert</span>` : ''}
-          </div>
-        </div>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="flex-shrink:0;color:var(--ink4);"><polyline points="9 18 15 12 9 6"/></svg>
-      </div>
-      <div class="cg-properties" style="display:none;">
-        ${g.properties.map(p => {
-          const isLease = p.transaction_type?.toLowerCase().includes('rent');
-          const dateLabel = isLease ? (p.lease_end_date ? 'Expires ' + p.lease_end_date : 'Lease') : (p.sold_date ? 'Closed ' + p.sold_date : '—');
-          const dot = isLease ? 'lease' : 'sold';
-          return `<div class="cg-prop-row">
-            <div class="cg-prop-dot ${dot}"></div>
-            <div class="cg-prop-addr">${escapeHtml(p.address||'—')}</div>
-            <div class="cg-prop-type">${escapeHtml(p.transaction_type||'')}</div>
-            <div class="cg-prop-date">${escapeHtml(dateLabel)}</div>
-            <button class="cg-prop-edit" onclick="event.stopPropagation();openEditDrawer('${escapeHtml(p.mls_number)}')">Edit</button>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>`;
-  }).join('')}</div>`;
-
+  // Wire clicks after render
+  groups.forEach(function(g, gIdx){
+    var card = document.getElementById('cg-' + gIdx);
+    if(!card) return;
+    card.addEventListener('click', function(e){
+      if(e.target.closest('button')) return;
+      openClientDrawerWithGroup(window._cgGroups[gIdx]);
+    });
+  });
 }
 
 function toggleGroup(key){
