@@ -1250,7 +1250,7 @@ function renderTheList(){
 }
 
 function wireTheListFilterButtons(wrap){
-  wrap.querySelectorAll('#thelistFilters .filter-btn').forEach(btn=>{
+  wrap.querySelectorAll('[data-tlval]').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       filterTheListStatus = btn.dataset.tlval;
       renderTheList();
