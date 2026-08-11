@@ -2131,7 +2131,6 @@ function renderGrouped(list){
     return;
   }
   const el = document.getElementById('list');
-  // Store groups for click handler
   window._cgGroups = groups;
   el.innerHTML = `<div class="client-grid">${groups.map((g, gIdx) => {
     const propCount = g.properties.length;
@@ -2153,7 +2152,7 @@ function renderGrouped(list){
     const statusClass = relStatus==='Active Client'?'status-active':relStatus==='Past Client'?'status-past':'status-prospect';
 
     return `<div class="client-group" id="cg-${gIdx}" data-cgidx="${gIdx}" style="cursor:pointer;">
-      <div class="client-group-head">
+      <div class="client-group-head" onclick="if(!event.target.closest('button')){var g=window._cgGroups[${gIdx}];if(g)openClientDrawerWithGroup(g);}">
         <div style="flex:1;min-width:0;">
           <div class="cg-name">${escapeHtml(g.name)}</div>
           <div class="cg-meta" style="margin-top:3px;">
@@ -2186,14 +2185,7 @@ function renderGrouped(list){
       </div>
     </div>`;
   }).join('')}</div>`;
-  // Wire clicks
-  document.querySelectorAll('.client-group[data-cgidx]').forEach(el => {
-    el.onclick = function(e){
-      if(e.target.closest('button')) return;
-      const idx = parseInt(this.dataset.cgidx);
-      if(window._cgGroups && window._cgGroups[idx]) openClientDrawerWithGroup(window._cgGroups[idx]);
-    };
-  });
+
 }
 
 function toggleGroup(key){
