@@ -313,6 +313,7 @@
 </nav>
 
 <div class="page-wrap"><div class="upcoming-panel ui" id="upcoming"></div>
+<div id="drawerTestBtn" style="display:none;"></div>
 
 <div class="stats-row ui" id="stats"></div>
 
@@ -2150,7 +2151,7 @@ function renderGrouped(list){
       const d = parseDate(p.lease_end_date); if(!d) return false;
       return Math.round((d - todayDate())/86400000) <= 60;
     });
-    html.push('<div class="client-group" id="cg-' + gIdx + '">');
+    html.push('<div class="client-group" id="cg-' + gIdx + '" onclick="if(!event.target.closest(\'.cg-prop-edit\')){var g=window._cgGroups[' + gIdx + '];console.log(\'onclick group\',g);if(g)openClientDrawerWithGroup(g);}">');
     html.push('<div class="client-group-head">');
     html.push('<div style="flex:1;min-width:0;">');
     html.push('<div class="cg-name">' + escapeHtml(g.name) + '</div>');
@@ -2176,7 +2177,9 @@ function renderGrouped(list){
     var card = document.getElementById('cg-' + gIdx);
     if(!card) return;
     card.addEventListener('click', function(e){
+      console.log('Card clicked', gIdx, e.target.tagName);
       if(e.target.closest('button')) return;
+      console.log('Opening drawer for', window._cgGroups[gIdx]);
       openClientDrawerWithGroup(window._cgGroups[gIdx]);
     });
   });
