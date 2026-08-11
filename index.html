@@ -390,6 +390,9 @@
 
 <div id="theListWrap"></div>
 
+<div id="addLeadBtnWrap" style="display:none;margin-bottom:12px;">
+  <button id="addLeadBtnStatic" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:500;letter-spacing:.06em;padding:8px 20px;border-radius:30px;border:none;background:var(--navy);color:var(--champ);cursor:pointer;">+ Add Lead</button>
+</div>
 <div id="referralsWrap"></div>
 
 <footer>Compiled from MLS production history and Gmail correspondence · The 58 Group · edits sync live to everyone viewing this page</footer>
@@ -1056,6 +1059,7 @@ function renderMainView(){
   document.getElementById('list').style.display = isClients ? '' : 'none';
   document.getElementById('theListWrap').style.display = isTheList ? '' : 'none';
   document.getElementById('referralsWrap').style.display = isReferrals ? '' : 'none';
+  document.getElementById('addLeadBtnWrap').style.display = isReferrals ? '' : 'none';
   if(isClients) render();
   else if(isTheList) renderTheList();
   else renderReferrals();
@@ -1408,7 +1412,7 @@ function renderReferrals(){
     return da - db;
   });
 
-  const addLeadBtnHtml = `<button id="addLeadBtn" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:500;letter-spacing:.06em;padding:8px 20px;border-radius:30px;border:none;background:var(--navy);color:var(--champ);cursor:pointer;margin-bottom:4px;">+ Add Lead</button>`;
+  const addLeadBtnHtml = ''; // Static button used instead
 
   const filterBtnsHtml = `
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:12px;">
@@ -2022,6 +2026,9 @@ async function importCsvFile(file){
   }
   showToast(failed ? `Imported ${imported} rows, ${failed} failed` : `Imported ${imported} rows successfully`, !!failed);
   await loadData();
+document.getElementById('addLeadBtnStatic').addEventListener('click', function(){
+  window.openAddDrawer({relationship_status:'Prospect'});
+});
 
 // Permanent listeners that survive re-renders
 document.body.addEventListener('click', function(e){
@@ -2052,6 +2059,9 @@ document.getElementById('importFileInput').addEventListener('change', (e)=>{
 });
 
 loadData();
+document.getElementById('addLeadBtnStatic').addEventListener('click', function(){
+  window.openAddDrawer({relationship_status:'Prospect'});
+});
 
 // Permanent listeners that survive re-renders
 document.body.addEventListener('click', function(e){
