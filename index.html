@@ -2551,6 +2551,20 @@ function buildDrawerForm(r){
   `;
 }
 
+async function deleteRecord(mls){
+  if(!confirm('Delete this record? This cannot be undone.')) return;
+  const { error } = await sb.from(TABLE).delete().eq('mls_number', mls);
+  if(!error){
+    records = records.filter(r => r.mls_number !== mls);
+    closeEditDrawer();
+    updateStats();
+    renderUpcoming();
+    render();
+  } else {
+    alert('Could not delete — try again');
+  }
+}
+
 async function saveDrawer(mls){
   const r = records.find(x => x.mls_number === mls);
   if(!r) return;
