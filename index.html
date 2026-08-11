@@ -2165,7 +2165,7 @@ function renderGrouped(list){
     if(hasLeaseAlert) html.push('<span style="font-size:9px;padding:2px 8px;border-radius:20px;background:#FFEBEE;color:#C62828;font-weight:500;">Lease alert</span>');
     html.push('</div>');
     html.push('</div>');
-    html.push('<button onclick="openClientDrawerWithGroup(window._cgGroups[' + gIdx + '])" style="font-size:10px;padding:4px 14px;border-radius:20px;border:none;background:var(--navy);color:var(--champ);cursor:pointer;font-family:Jost,sans-serif;font-weight:500;flex-shrink:0;">Ver</button>');
+    html.push('<button onclick="openClientDrawerWithGroup(window._cgGroups[' + gIdx + '])" style="font-size:10px;padding:4px 14px;border-radius:20px;border:none;background:var(--navy);color:var(--champ);cursor:pointer;font-family:Jost,sans-serif;font-weight:500;flex-shrink:0;">View</button>');
     html.push('</div>'); // end head
     html.push('</div>'); // end client-group
   });
@@ -2321,6 +2321,7 @@ function openClientDrawer(groupKey){
 }
 
 function openClientDrawerWithGroup(group){
+  if(!group){alert("No group data");return;}
   document.getElementById('clientDrawerBadge').textContent = group.properties.length + ' ' + (group.properties.length === 1 ? 'property' : 'properties');
   document.getElementById('clientDrawerName').textContent = group.name;
   document.getElementById('clientDrawerSub').textContent = [group.email, group.phone].filter(Boolean).join(' · ') || 'No contact info';
@@ -2579,8 +2580,8 @@ async function saveDrawer(mls){
 </div>
 
 <!-- CLIENT PROFILE DRAWER -->
-<div class="overlay" id="clientOverlay" onclick="closeClientDrawer()"></div>
-<div class="edit-drawer" id="clientDrawer">
+<div class="overlay" id="clientOverlay" onclick="closeClientDrawer()" style="z-index:500;"></div>
+<div class="edit-drawer" id="clientDrawer" style="z-index:501;">
   <div class="drawer-head">
     <div>
       <div class="sheet-badge" id="clientDrawerBadge">Client Profile</div>
