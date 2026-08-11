@@ -2687,9 +2687,15 @@ async function saveDrawer(mls){
 }
 
 // Wire static Add Lead button — after all functions defined
-document.getElementById('addLeadBtnStatic').addEventListener('click', function(){
-  openAddDrawer({relationship_status:'Prospect'});
-});
+var _addLeadStatic = document.getElementById('addLeadBtnStatic');
+if(_addLeadStatic){
+  _addLeadStatic.addEventListener('click', function(e){
+    alert('Add Lead clicked! openAddDrawer exists: ' + (typeof openAddDrawer));
+    openAddDrawer({relationship_status:'Prospect'});
+  });
+} else {
+  alert('addLeadBtnStatic not found in DOM');
+}
 </script>
 
 <!-- EDIT DRAWER -->
