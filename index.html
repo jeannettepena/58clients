@@ -2026,9 +2026,6 @@ async function importCsvFile(file){
   }
   showToast(failed ? `Imported ${imported} rows, ${failed} failed` : `Imported ${imported} rows successfully`, !!failed);
   await loadData();
-document.getElementById('addLeadBtnStatic').addEventListener('click', function(){
-  window.openAddDrawer({relationship_status:'Prospect'});
-});
 
 // Permanent listeners that survive re-renders
 document.body.addEventListener('click', function(e){
@@ -2059,9 +2056,6 @@ document.getElementById('importFileInput').addEventListener('change', (e)=>{
 });
 
 loadData();
-document.getElementById('addLeadBtnStatic').addEventListener('click', function(){
-  window.openAddDrawer({relationship_status:'Prospect'});
-});
 
 // Permanent listeners that survive re-renders
 document.body.addEventListener('click', function(e){
@@ -2691,8 +2685,12 @@ async function saveDrawer(mls){
   if(!error){ closeEditDrawer(); render(); }
   else { alert('Error saving — check console'); console.error(error); }
 }
-</script>
 
+// Wire static Add Lead button — after all functions defined
+document.getElementById('addLeadBtnStatic').addEventListener('click', function(){
+  openAddDrawer({relationship_status:'Prospect'});
+});
+</script>
 
 <!-- EDIT DRAWER -->
 <div class="overlay" id="editOverlay" onclick="closeEditDrawer()"></div>
