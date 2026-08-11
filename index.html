@@ -1477,16 +1477,16 @@ function renderReferrals(){
     </div>
   `;
 
-  // Wire filter buttons
+  // Wire everything directly
   wrap.querySelectorAll('[data-rfval]').forEach(btn=>{
     btn.addEventListener('click', ()=>{ filterReferralFollowUp = btn.dataset.rfval; renderReferrals(); });
   });
+  const addLeadBtn = wrap.querySelector('#addLeadBtn');
+  if(addLeadBtn) addLeadBtn.addEventListener('click', ()=> openAddDrawer({relationship_status:'Prospect'}));
   wrap.querySelectorAll('[data-logresult]').forEach(btn=>{
     btn.addEventListener('click', ()=>{ logContactMls = btn.dataset.logresult; logContactMode = 'result'; renderReferrals(); });
   });
   wrap.querySelectorAll('[data-open]').forEach(btn=>{ btn.addEventListener('click', ()=>{ openEditDrawer(btn.dataset.open); }); });
-  wireAddLeadButton(wrap);
-  wireReferralsFilterButtons(wrap);
   wireLogContactForm(wrap, renderReferrals);
 }
 function wireAddLeadButton(wrap){
