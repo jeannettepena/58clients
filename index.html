@@ -2151,7 +2151,7 @@ function renderGrouped(list){
       const d = parseDate(p.lease_end_date); if(!d) return false;
       return Math.round((d - todayDate())/86400000) <= 60;
     });
-    html.push('<div class="client-group" id="cg-' + gIdx + '" onclick="if(!event.target.closest(\'.cg-prop-edit\')){var g=window._cgGroups[' + gIdx + '];console.log(\'onclick group\',g);if(g)openClientDrawerWithGroup(g);}">');
+    html.push('<div class="client-group" id="cg-' + gIdx + '">');
     html.push('<div class="client-group-head">');
     html.push('<div style="flex:1;min-width:0;">');
     html.push('<div class="cg-name">' + escapeHtml(g.name) + '</div>');
@@ -2165,7 +2165,7 @@ function renderGrouped(list){
     if(hasLeaseAlert) html.push('<span style="font-size:9px;padding:2px 8px;border-radius:20px;background:#FFEBEE;color:#C62828;font-weight:500;">Lease alert</span>');
     html.push('</div>');
     html.push('</div>');
-    html.push('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="flex-shrink:0;color:var(--ink4);"><polyline points="9 18 15 12 9 6"/></svg>');
+    html.push('<button onclick="openClientDrawerWithGroup(window._cgGroups[' + gIdx + '])" style="font-size:10px;padding:4px 14px;border-radius:20px;border:none;background:var(--navy);color:var(--champ);cursor:pointer;font-family:Jost,sans-serif;font-weight:500;flex-shrink:0;">Ver</button>');
     html.push('</div>'); // end head
     html.push('</div>'); // end client-group
   });
@@ -2177,9 +2177,7 @@ function renderGrouped(list){
     var card = document.getElementById('cg-' + gIdx);
     if(!card) return;
     card.addEventListener('click', function(e){
-      console.log('Card clicked', gIdx, e.target.tagName);
       if(e.target.closest('button')) return;
-      console.log('Opening drawer for', window._cgGroups[gIdx]);
       openClientDrawerWithGroup(window._cgGroups[gIdx]);
     });
   });
