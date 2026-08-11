@@ -1471,6 +1471,7 @@ function renderReferrals(){
 
   // Open button still needs direct wiring
   wrap.querySelectorAll('[data-open]').forEach(btn=>{ btn.addEventListener('click', ()=>{ openEditDrawer(btn.dataset.open); }); });
+  wireAddLeadButton(wrap);
   wireLogContactForm(wrap, renderReferrals);
 }
 function wireAddLeadButton(wrap){
