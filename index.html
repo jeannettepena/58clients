@@ -1221,14 +1221,6 @@ function renderTheList(){
     </div>
   `;
 
-  // Wire filter chips directly
-  wrap.querySelectorAll('[data-tlval]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      filterTheListStatus = btn.dataset.tlval;
-      renderTheList();
-    });
-  });
-
   wrap.querySelectorAll('.the-list-status-sel').forEach(sel=>{
     sel.addEventListener('change', async ()=>{
       const mls = sel.dataset.mls;
@@ -1477,15 +1469,7 @@ function renderReferrals(){
     </div>
   `;
 
-  // Wire everything directly
-  wrap.querySelectorAll('[data-rfval]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{ filterReferralFollowUp = btn.dataset.rfval; renderReferrals(); });
-  });
-  const addLeadBtn = wrap.querySelector('#addLeadBtn');
-  if(addLeadBtn) addLeadBtn.addEventListener('click', ()=> openAddDrawer({relationship_status:'Prospect'}));
-  wrap.querySelectorAll('[data-logresult]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{ logContactMls = btn.dataset.logresult; logContactMode = 'result'; renderReferrals(); });
-  });
+  // Open button still needs direct wiring
   wrap.querySelectorAll('[data-open]').forEach(btn=>{ btn.addEventListener('click', ()=>{ openEditDrawer(btn.dataset.open); }); });
   wireLogContactForm(wrap, renderReferrals);
 }
@@ -2478,6 +2462,46 @@ function buildClientProfile(group){
     </div>
   `;
 }
+
+
+// ── EVENT DELEGATION — Referrals & Leads ─────────────────────────────
+document.addEventListener('click', function(e){
+  // Filter chips
+  const rfBtn = e.target.closest('[data-rfval]');
+  if(rfBtn && document.getElementById('referralsWrap')?.contains(rfBtn)){
+    filterReferralFollowUp = rfBtn.dataset.rfval;
+    renderReferrals();
+    return;
+  }
+  // Add Lead
+  if(e.target.closest('#addLeadBtn') && document.getElementById('referralsWrap')?.contains(e.target)){
+    openAddDrawer({relationship_status:'Prospect'});
+    return;
+  }
+  // Log Result
+  const logBtn = e.target.closest('[data-logresult]');
+  if(logBtn && document.getElementById('referralsWrap')?.contains(logBtn)){
+    logContactMls = logBtn.dataset.logresult;
+    logContactMode = 'result';
+    renderReferrals();
+    return;
+  }
+  // The List filter chips
+  const tlBtn = e.target.closest('[data-tlval]');
+  if(tlBtn && document.getElementById('theListWrap')?.contains(tlBtn)){
+    filterTheListStatus = tlBtn.dataset.tlval;
+    renderTheList();
+    return;
+  }
+  // The List Log Call
+  const logCallBtn = e.target.closest('[data-logcall]');
+  if(logCallBtn && document.getElementById('theListWrap')?.contains(logCallBtn)){
+    logContactMls = logCallBtn.dataset.logcall;
+    logContactMode = 'call';
+    renderTheList();
+    return;
+  }
+});
 
 // ── EDIT DRAWER ────────────────────────────────────────
 function openEditDrawer(mls){
