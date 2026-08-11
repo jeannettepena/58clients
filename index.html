@@ -2074,12 +2074,16 @@ function groupClients(recs){
   recs.forEach(r => {
     // Skip records with no client name
     if(!r.owner1_name || !r.owner1_name.trim()) return;
-    // Group by email first, then by normalized name
-    const key = r.owner1_email?.toLowerCase().trim() || 
-                r.owner1_name?.toLowerCase().trim().replace(/\s+/g,' ') || 
-                r.mls_number;
+    // Group by normalized name first — consolidates same person with/without email
+    const normalizedName = r.owner1_name.toLowerCase().trim().replace(/\s+/g,' ');
+    const key = normalizedName;
     if(!groups.has(key)){
-      groups.set(key, { key, name: r.owner1_name||r.address||'—', email: r.owner1_email||'', phone: r.owner1_phone||'', properties: [] });
+      groups.set(key, { key, name: r.owner1_name||'—', email: r.owner1_email||'', phone: r.owner1_phone||'', properties: [] });
+    } else {
+      // Update email/phone if current record has better data
+      const g = groups.get(key);
+      if(!g.email && r.owner1_email) g.email = r.owner1_email;
+      if(!g.phone && r.owner1_phone) g.phone = r.owner1_phone;
     }
     groups.get(key).properties.push(r);
   });
