@@ -2089,7 +2089,14 @@ function groupClients(recs){
       return db - da;
     });
   });
-  return Array.from(groups.values()).sort((a,b) => a.name.localeCompare(b.name));
+  return Array.from(groups.values())
+    .filter(g => g.name && g.name.trim() !== '' && g.name !== '—')
+    .sort((a,b) => {
+      // Named clients first, then by name
+      const aHasName = !!(g => g.email || g.properties[0]?.owner1_name)(a);
+      const bHasName = !!(g => g.email || g.properties[0]?.owner1_name)(b);
+      return a.name.localeCompare(b.name);
+    });
 }
 
 
@@ -2119,7 +2126,9 @@ function renderByProperty(recs){
       </div>
       <div class="cc-foot">
         <div class="cc-next" style="font-size:11px;color:var(--ink3);">${escapeHtml(r.relationship_status||'')}</div>
-        <button onclick="openEditDrawer('${escapeHtml(r.mls_number)}')" style="font-size:10px;padding:3px 12px;border-radius:20px;border:none;background:var(--navy);color:var(--champ);cursor:pointer;font-family:'Jost',sans-serif;font-weight:500;">Edit</button>
+        <div style="display:flex;gap:6px;">
+          <button onclick="openEditDrawer('${escapeHtml(r.mls_number)}')" style="font-size:10px;padding:3px 12px;border-radius:20px;border:none;background:var(--navy);color:var(--champ);cursor:pointer;font-family:'Jost',sans-serif;font-weight:500;">Edit</button>
+        </div>
       </div>
     </div>`;
   }).join('')}</div>`;
