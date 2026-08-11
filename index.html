@@ -2312,7 +2312,7 @@ function wireAddDrawerSave(prefill){
 
 // ── CLIENT PROFILE DRAWER ─────────────────────────────
 function openClientDrawer(groupKey){
-  const group = groupClients(filteredRecords ? filteredRecords() : records).find(g => g.key === decodeURIComponent(groupKey));
+  const group = groupClients(records).find(g => g.key === decodeURIComponent(groupKey));
   if(!group) return;
 
   document.getElementById('clientDrawerBadge').textContent = group.properties.length + ' ' + (group.properties.length === 1 ? 'property' : 'properties');
