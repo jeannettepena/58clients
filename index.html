@@ -567,7 +567,13 @@ function isTheListEligible(r){
 // nothing here is stored separately.
 // ---------------------------------------------------------------------------
 function isReferralLeadEligible(r){
-  return ['Prospect','Warm Lead'].includes(r.relationship_status) || typeArr(r).includes('Referral');
+  if(['Prospect','Warm Lead'].includes(r.relationship_status)) return true;
+  // A "Referral" client-type tag means the lead came from a referral source — surface it here
+  // only until it gets an explicit Relationship Status. Once a status is set (Past Client,
+  // Active Client, Archived, etc.) that status is authoritative and the lead moves on — a
+  // Referral tag should never keep someone stuck in Leads forever.
+  if(!r.relationship_status && typeArr(r).includes('Referral')) return true;
+  return false;
 }
 
 // ---------------------------------------------------------------------------
