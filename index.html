@@ -395,7 +395,7 @@
 </div>
 <div id="referralsWrap"></div>
 
-<footer>Compiled from MLS production history and Gmail correspondence · The 58 Group · edits sync live to everyone viewing this page<br><span style="letter-spacing:.15em;text-transform:uppercase;font-size:9px;opacity:.6;">A <strong>Quantum58</strong> Framework — Created by Jeannette Peña</span></footer>
+<footer><span style="letter-spacing:.15em;text-transform:uppercase;font-size:9px;opacity:.6;">A <strong>Quantum58</strong> Framework — Created by Jeannette Peña</span></footer>
 
 <div class="toast ui" id="toast"></div>
 <div id="modalRoot"></div>
@@ -1491,7 +1491,10 @@ function renderReferrals(){
               ${r.client_note?`<div style="font-size:11px;color:var(--ink4);margin-top:4px;font-style:italic;">${escapeHtml((r.client_note||'').slice(0,100))}</div>`:''}
             </div>
             <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-              ${r.relationship_status?`<span class="fchip on" style="font-size:9px;padding:2px 8px;cursor:default;">${escapeHtml(r.relationship_status)}</span>`:''}
+              <select class="rel-status-select" data-mls="${escapeHtml(r.mls_number)}" style="font-family:'Jost',sans-serif;font-size:9px;font-weight:500;padding:3px 8px;border-radius:20px;border:1px solid var(--champ);background:var(--champ-wash);color:var(--navy);cursor:pointer;">
+                <option value="">— Relationship —</option>
+                ${RELATIONSHIP_STATUSES.map(s=>`<option value="${s}" ${r.relationship_status===s?'selected':''}>${s}</option>`).join('')}
+              </select>
               <span class="fchip" style="font-size:9px;padding:2px 8px;cursor:default;${fuOverdue?'background:#FFEBEE;border-color:#F3C5C5;color:#C24A3B;':''}">${escapeHtml(fuStatus)}</span>
             </div>
           </div>
@@ -1513,8 +1516,31 @@ function renderReferrals(){
 
   // Open button still needs direct wiring
   wrap.querySelectorAll('[data-open]').forEach(btn=>{ btn.addEventListener('click', ()=>{ openEditDrawer(btn.dataset.open); }); });
+  wrap.querySelectorAll('.rel-status-select').forEach(sel=>{
+    sel.addEventListener('click', e=> e.stopPropagation());
+    sel.addEventListener('change', ()=> updateReferralRelationshipStatus(sel.dataset.mls, sel.value));
+  });
   wireAddLeadButton(wrap);
   wireLogContactForm(wrap, renderReferrals);
+}
+async function updateReferralRelationshipStatus(mls, newStatus){
+  const rec = records.find(x=>x.mls_number===mls);
+  if(!rec) return;
+  const prevRel = rec.relationship_status || '';
+  if(prevRel === newStatus) return;
+  const updates = { relationship_status: newStatus || null, updated_at: new Date().toISOString() };
+  const { error } = await sb.from(TABLE).update(updates).eq('mls_number', mls);
+  if(error){ showToast('Could not save — please try again', true); renderReferrals(); return; }
+  Object.assign(rec, updates);
+  await addActivityLogEntry(mls, {
+    activity_type: 'Status Changed',
+    description: `Relationship Status changed from ${prevRel||'—'} to ${newStatus||'—'}.`,
+    related_property: rec.address,
+    previous_value: prevRel,
+    new_value: newStatus||''
+  });
+  showToast('Updated to '+(newStatus||'—'));
+  renderReferrals();
 }
 function wireAddLeadButton(wrap){
   const btn = wrap.querySelector('#addLeadBtn');
