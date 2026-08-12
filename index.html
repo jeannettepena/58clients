@@ -256,6 +256,30 @@
   .fchip{background:transparent;border:1px solid var(--border);color:var(--ink3);font-size:11px;letter-spacing:.06em;font-family:'Jost',sans-serif;padding:5px 12px;border-radius:30px;cursor:pointer;transition:all .2s;font-weight:400;}
   .fchip:hover{border-color:var(--champ);}
   .fchip.on{background:var(--champ);color:var(--navy);border-color:var(--champ);font-weight:500;}
+  .chip-picker{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+  .chip-picker .fchip{padding:6px 13px;}
+
+  /* EDIT CARD — same interactive design language as the rest of the app (paper surfaces,
+     Jost labels, champagne focus) instead of raw/"analog" native browser form controls. */
+  .card.editing{background:var(--paper);border:1px solid var(--champ);border-radius:var(--r);padding:22px 24px;box-shadow:var(--shadow);}
+  .addr-label{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;color:var(--navy);margin-bottom:14px;}
+  .validation-note{font-family:'Jost',sans-serif;font-size:12px;background:var(--amber-bg);color:var(--amber-tx);padding:10px 14px;border-radius:8px;margin-bottom:16px;}
+  .edit-section{margin-bottom:22px;padding-bottom:22px;border-bottom:1px solid var(--border);}
+  .edit-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+  .edit-section .es-title{font-family:'Jost',sans-serif;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);font-weight:500;margin-bottom:14px;}
+  .edit-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;}
+  .edit-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+  .edit-field-full{margin-bottom:12px;}
+  .edit-form label{font-family:'Jost',sans-serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);font-weight:500;display:block;margin-bottom:4px;}
+  .edit-form input[type="text"],.edit-form input[type="date"],.edit-form select,.edit-form textarea{font-family:'Jost',sans-serif;font-size:13px;font-weight:300;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--ink);outline:none;transition:border-color .2s;width:100%;}
+  .edit-form input[type="text"]:focus,.edit-form input[type="date"]:focus,.edit-form select:focus,.edit-form textarea:focus{border-color:var(--champ);}
+  .edit-form input:disabled{background:var(--cream);color:var(--ink4);}
+  .edit-form textarea{resize:vertical;min-height:60px;}
+  .edit-section > label,.edit-section > input,.edit-section > textarea{display:block;margin-bottom:10px;}
+  .auto-hint{font-family:'Jost',sans-serif;font-size:11px;font-style:italic;color:var(--ink3);margin-top:6px;margin-bottom:8px;line-height:1.4;}
+  .override-row{display:flex;align-items:center;gap:8px;}
+  .override-row input[type="checkbox"]{accent-color:var(--champ);width:15px;height:15px;cursor:pointer;flex-shrink:0;margin:0;}
+  .override-row label{display:inline;margin:0;text-transform:none;font-weight:400;font-size:12px;letter-spacing:0;color:var(--ink2);cursor:pointer;}
 
   /* ACTIVITY LOG */
   .chk{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--border);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;}
@@ -282,8 +306,8 @@
 
   /* TWO COL */
   .two{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-  @media(max-width:960px){.client-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
-  @media(max-width:600px){.two{grid-template-columns:1fr;}.client-grid{grid-template-columns:1fr;}.app-grid{grid-template-columns:1fr;}}
+  @media(max-width:960px){.client-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.edit-grid-3{grid-template-columns:1fr 1fr;}}
+  @media(max-width:600px){.two{grid-template-columns:1fr;}.client-grid{grid-template-columns:1fr;}.app-grid{grid-template-columns:1fr;}.edit-grid-3{grid-template-columns:1fr;}.edit-grid-2{grid-template-columns:1fr;}}
 
   /* EMPTY STATE */
   .empty-state{text-align:center;padding:60px 20px;color:var(--ink3);}
@@ -300,6 +324,7 @@
   <div class="jp58-topnav-links">
     <a href="https://jp58.netlify.app" class="jp58-topnav-link">← JP58</a>
     <a href="https://58hub.netlify.app" class="jp58-topnav-link">58 HUB</a>
+    <a href="https://jeannettepenaeos.netlify.app" class="jp58-topnav-link">Goals ↗</a>
   </div>
 </nav>
 <header>
@@ -703,22 +728,7 @@ function wireUpcomingEvents(){
   });
 }
 function openRecordForEdit(mls){
-  currentView = 'clients';
-  searchTerm = '';
-  activeQuickView = null;
-  filterInfo='all'; filterRelationship='all'; filterType='all'; filterPropStatus='all';
-  renderViewTabs();
-  renderFilters();
-  renderQuickViews();
-  const searchEl = document.getElementById('search');
-  if(searchEl) searchEl.value = '';
-  editingMls = mls;
-  addingNew = false;
-  renderMainView();
-  requestAnimationFrame(()=>{
-    const card = document.querySelector('.card.editing');
-    if(card) card.scrollIntoView({behavior:'smooth', block:'center'});
-  });
+  openEditDrawer(mls);
 }
 
 // Opens the "Add Client / Property" form on the All Clients & Properties tab,
@@ -830,21 +840,28 @@ function activityLogHtml(mls){
 // ---------------------------------------------------------------------------
 const HUB_STATUS_LABEL = {pocket:'Coming Soon','coming-soon':'Coming Soon',active:'Active','under-contract':'Under Contract'};
 let PIPELINE_INDEX = { byMls:{}, byName:{} };
+let CLOSED_INDEX = { byMls:{}, byName:{} };
 function normName(s){ return (s||'').toLowerCase().trim().replace(/\s+/g,' '); }
 async function loadHubPipeline(){
   try{
     const { data, error } = await sb.from('ops_state').select('data').eq('id','main').single();
     if(error || !data || !data.data) return;
     const props = data.data.properties || [];
-    const byMls = {}, byName = {};
+    const byMls = {}, byName = {}, closedByMls = {}, closedByName = {};
     props.forEach(p=>{
       if(!p || !p.status) return;
-      if(p.status==='sold' || p.status==='leased') return; // closed deals are no longer "in pipeline"
+      if(p.status==='sold' || p.status==='leased'){
+        if(p.crmMls) closedByMls[String(p.crmMls)] = p;
+        const nm = normName(p.owner);
+        if(nm && !closedByName[nm]) closedByName[nm] = p;
+        return;
+      }
       if(p.crmMls) byMls[String(p.crmMls)] = p;
       const nm = normName(p.owner);
       if(nm && !byName[nm]) byName[nm] = p; // first live match wins for the fuzzy fallback
     });
     PIPELINE_INDEX = { byMls, byName };
+    CLOSED_INDEX = { byMls: closedByMls, byName: closedByName };
   }catch(e){ /* 58 HUB pipeline is optional context here — never block the CRM on it */ }
 }
 function pipelineMatch(r){
@@ -854,11 +871,24 @@ function pipelineMatch(r){
   if(nm && PIPELINE_INDEX.byName[nm]) return PIPELINE_INDEX.byName[nm];
   return null;
 }
+function closedMatch(r){
+  if(!r) return null;
+  if(r.mls_number && CLOSED_INDEX.byMls[String(r.mls_number)]) return CLOSED_INDEX.byMls[String(r.mls_number)];
+  const nm = normName(r.owner1_name);
+  if(nm && CLOSED_INDEX.byName[nm]) return CLOSED_INDEX.byName[nm];
+  return null;
+}
 function pipelineBadgeHtml(r){
   const m = pipelineMatch(r);
-  if(!m) return '';
-  const label = HUB_STATUS_LABEL[m.status] || 'Active';
-  return `<span class="cc-tag" style="background:var(--navy);color:var(--champ);font-weight:600;">In Pipeline · ${escapeHtml(label)}</span>`;
+  if(m){
+    const label = HUB_STATUS_LABEL[m.status] || 'Active';
+    return `<span class="cc-tag" style="background:var(--navy);color:var(--champ);font-weight:600;">In Pipeline · ${escapeHtml(label)}</span>`;
+  }
+  const c = closedMatch(r);
+  if(c){
+    return `<span class="cc-tag" style="background:var(--teal);color:#fff;font-weight:600;">Closed ✓</span>`;
+  }
+  return '';
 }
 
 // ---------------------------------------------------------------------------
@@ -882,6 +912,21 @@ async function loadData(){
   updateStats();
   renderUpcoming();
   renderMainView();
+  openDeepLinkedRecord();
+}
+
+// If the page was opened with ?open=<mls_number> (e.g. from 58 HUB's "Open in CRM" link),
+// jump straight to that client's record in the wide edit drawer instead of the homepage.
+let _deepLinkHandled = false;
+function openDeepLinkedRecord(){
+  if(_deepLinkHandled) return;
+  const params = new URLSearchParams(window.location.search);
+  const mls = params.get('open');
+  if(!mls) return;
+  const r = records.find(x => String(x.mls_number) === String(mls));
+  if(!r) return;
+  _deepLinkHandled = true;
+  openEditDrawer(r.mls_number);
 }
 
 // ---------------------------------------------------------------------------
@@ -1347,7 +1392,7 @@ function logContactFormHtml(r, mode){
   `;
 }
 function wireLogContactForm(wrap, rerender){
-  const formRow = wrap.querySelector('.log-contact-row');
+  const formRow = wrap.querySelector('.log-contact-form');
   if(!formRow) return;
   const mls = logContactMls;
   const resultSel = formRow.querySelector('.lcf-result');
@@ -1575,6 +1620,17 @@ function selectHtml(cls, options, current, placeholder){
     ${options.map(o=>`<option value="${o}" ${current===o?'selected':''}>${o}</option>`).join('')}
   </select>`;
 }
+// Same idea as selectHtml() but rendered as clickable fchip pills instead of a native <select> —
+// used for status-style fields where a one-click picker reads better than a plain dropdown.
+// Keeps a hidden input of class `cls` so all existing save-time `.value` reads keep working untouched.
+function chipPickerHtml(cls, options, current, placeholder){
+  const chip = (val, label) => `<button type="button" class="fchip ${current===val?'on':(!current&&val===''?'on':'')}" data-chip-val="${escapeHtml(val)}">${escapeHtml(label)}</button>`;
+  return `<input type="hidden" class="${cls}" value="${escapeHtml(current||'')}">
+  <div class="chip-picker" data-chip-target="${cls}">
+    ${placeholder ? chip('', placeholder) : ''}
+    ${options.map(o=>chip(o,o)).join('')}
+  </div>`;
+}
 
 function renderEditCard(r){
   const rental = isRentalRole(r.role);
@@ -1654,21 +1710,24 @@ function renderEditCard(r){
 
         <div class="edit-section">
           <div class="es-title">Follow-Up</div>
-          <div class="edit-grid-3">
+          <div class="edit-grid-2">
             <div><label>Last Contact Date</label><input type="date" class="f-last-contact" value="${mmddyyyyToIso(r.last_contact_date)}"></div>
             <div><label>Next Follow-Up Date</label><input type="date" class="f-next-followup" value="${mmddyyyyToIso(r.next_follow_up_date)}"></div>
-            <div>
-              <label>Follow-Up Status</label>
-              ${selectHtml('f-followup-override', ['', ...FOLLOWUP_OVERRIDE_OPTIONS], r.follow_up_status_override, 'Auto (from date above)')}
-            </div>
+          </div>
+          <div class="edit-field-full">
+            <label>Follow-Up Status</label>
+            ${chipPickerHtml('f-followup-override', FOLLOWUP_OVERRIDE_OPTIONS, r.follow_up_status_override, 'Auto (from date above)')}
           </div>
           <label>Follow-Up Reason</label><input type="text" class="f-followup-reason" value="${escapeHtml(r.follow_up_reason||'')}" placeholder="e.g. Lease renewal conversation">
         </div>
 
         <div class="edit-section">
           <div class="es-title">Annual 58 Home Review</div>
-          <div class="edit-grid-3">
-            <div><label>Review Status</label>${selectHtml('f-review-status', ANNUAL_REVIEW_STATUSES, r.annual_review_status || 'Not Applicable')}</div>
+          <div class="edit-field-full">
+            <label>Review Status</label>
+            ${chipPickerHtml('f-review-status', ANNUAL_REVIEW_STATUSES, r.annual_review_status || 'Not Applicable')}
+          </div>
+          <div class="edit-grid-2">
             <div><label>Last Review Date</label><input type="date" class="f-review-last" value="${mmddyyyyToIso(r.annual_review_last_date)}"></div>
             <div><label>Next Review Date</label><input type="date" class="f-review-next" value="${mmddyyyyToIso(r.annual_review_next_date)}"></div>
           </div>
@@ -1852,6 +1911,20 @@ function wireEditCardEvents(){
   const list = document.getElementById('list');
   const cancelBtn = list.querySelector('[data-cancel]');
   if(cancelBtn) cancelBtn.addEventListener('click', ()=>{ editingMls = null; render(); });
+
+  // Chip pickers (Follow-Up Status, Review Status, …) — click a pill to set the paired hidden input,
+  // same value contract the save handler already reads via `.value` on the hidden input's class.
+  list.querySelectorAll('.chip-picker').forEach(wrap=>{
+    const hidden = list.querySelector('.'+wrap.dataset.chipTarget);
+    if(!hidden) return;
+    wrap.querySelectorAll('.fchip').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        hidden.value = btn.dataset.chipVal;
+        wrap.querySelectorAll('.fchip').forEach(b=>b.classList.remove('on'));
+        btn.classList.add('on');
+      });
+    });
+  });
 
   const overrideBox = list.querySelector('.f-info-override');
   if(overrideBox){
@@ -2633,9 +2706,50 @@ window.openEditDrawer = function openEditDrawer(mls){
   document.getElementById('drawerName').textContent = r.owner1_name || r.address || '—';
   document.getElementById('drawerSub').textContent = (r.address||'') + (r.city?' · '+r.city:'') + (r.sold_date?' · Closed '+r.sold_date:'');
   document.getElementById('drawerBody').innerHTML = buildDrawerForm(r);
+  wireDrawerFormEvents(r);
   document.getElementById('editDrawer').classList.add('open');
   document.getElementById('editOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
+}
+
+function wireDrawerFormEvents(r){
+  const body = document.getElementById('drawerBody');
+  if(!body) return;
+  body.querySelectorAll('.chip-picker').forEach(wrap=>{
+    const hidden = body.querySelector('.'+wrap.dataset.chipTarget);
+    if(!hidden) return;
+    wrap.querySelectorAll('.fchip').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        hidden.value = btn.dataset.chipVal;
+        wrap.querySelectorAll('.fchip').forEach(b=>b.classList.remove('on'));
+        btn.classList.add('on');
+      });
+    });
+  });
+  const overrideBox = body.querySelector('.f-info-override');
+  const statusSelect = body.querySelector('.f-info-status');
+  const statusHint = body.querySelector('#drawerAutoStatusHint');
+  if(overrideBox && statusSelect){
+    overrideBox.addEventListener('change', ()=>{
+      statusSelect.disabled = !overrideBox.checked;
+      if(!overrideBox.checked){
+        const draft = { ...r,
+          owner1_name: (body.querySelector('.f-o1-name')||{}).value?.trim() ?? r.owner1_name,
+          owner1_email: (body.querySelector('.f-o1-email')||{}).value?.trim() ?? r.owner1_email,
+          owner1_phone: (body.querySelector('.f-o1-phone')||{}).value?.trim() ?? r.owner1_phone,
+          owner2_email: (body.querySelector('.f-o2-email')||{}).value?.trim() ?? r.owner2_email,
+          owner2_phone: (body.querySelector('.f-o2-phone')||{}).value?.trim() ?? r.owner2_phone,
+          relationship_status: (body.querySelector('.f-rel-status')||{}).value ?? r.relationship_status,
+          client_type: Array.from(body.querySelectorAll('.f-client-type:checked')).map(cb=>cb.value)
+        };
+        const auto = computeAutoInfoStatus(draft);
+        statusSelect.value = auto;
+        if(statusHint) statusHint.textContent = `Auto-computed from the fields below: ${auto}.`;
+      } else {
+        if(statusHint) statusHint.textContent = 'Manually overridden.';
+      }
+    });
+  }
 }
 
 function closeEditDrawer(){
@@ -2647,6 +2761,10 @@ function closeEditDrawer(){
 function buildDrawerForm(r){
   const selectOpts = (arr, val) => ['', ...arr].map(o => `<option value="${o}" ${o===val?'selected':''}>${o||'—'}</option>`).join('');
   const mailingIsSame = !r.mailing_address || r.mailing_address === r.address;
+  const drawerAutoStatus = computeAutoInfoStatus({...r, client_type: typeArr(r)});
+  const drawerOverridden = !!r.client_info_status_overridden;
+  const drawerAppreciation = (r.estimated_current_value != null && r.original_purchase_price != null)
+    ? (Number(r.estimated_current_value) - Number(r.original_purchase_price)) : null;
   return `
     <div class="drawer-section">
       <div class="drawer-section-title">Client 1</div>
@@ -2669,9 +2787,51 @@ function buildDrawerForm(r){
     <div class="drawer-section">
       <div class="drawer-section-title">Status & Relationship</div>
       <div class="drawer-grid">
+        <div class="drawer-field">
+          <label>Client Information Status</label>
+          <select class="f-info-status" ${drawerOverridden?'':'disabled'}>${selectOpts(INFO_STATUSES, drawerOverridden ? r.client_info_status : drawerAutoStatus)}</select>
+          <div class="auto-hint" id="drawerAutoStatusHint">${drawerOverridden ? 'Manually overridden.' : `Auto-computed from the fields below: ${drawerAutoStatus}.`}</div>
+          <div class="override-row">
+            <input type="checkbox" class="f-info-override" id="drawerInfoOverrideBox" ${drawerOverridden?'checked':''}>
+            <label style="margin:0;text-transform:none;font-weight:400;" for="drawerInfoOverrideBox">Manually set this status instead of auto-computing it</label>
+          </div>
+        </div>
         <div class="drawer-field"><label>Relationship Status</label><select class="f-rel-status"><option value="">—</option>${selectOpts(RELATIONSHIP_STATUSES, r.relationship_status)}</select></div>
-        <div class="drawer-field"><label>Next Follow-Up</label><input class="f-followup" type="date" value="${escapeHtml(r.next_follow_up_date||'')}"></div>
+      </div>
+      <div class="drawer-field" style="margin-top:12px;"><label>Client Type (select all that apply)</label><div class="checkbox-grid">${clientTypeCheckboxesHtml(typeArr(r))}</div></div>
+      <div class="drawer-grid" style="margin-top:12px;">
+        <div class="drawer-field"><label>Assigned Agent</label><select class="f-assigned-agent">${selectOpts(ASSIGNED_AGENTS, r.assigned_agent||'Jeannette')}</select></div>
+        <div class="drawer-field"><label>Referred By (optional)</label><input class="f-referred-by" value="${escapeHtml(r.referred_by||'')}" placeholder="Who sent you this client?"></div>
         <div class="drawer-field" style="grid-column:span 2"><label>Client Note</label><textarea class="f-client-note" rows="2" style="resize:none;">${escapeHtml(r.client_note||'')}</textarea></div>
+      </div>
+    </div>
+    <div class="drawer-section">
+      <div class="drawer-section-title">Follow-Up</div>
+      <div class="drawer-grid">
+        <div class="drawer-field"><label>Last Contact Date</label><input type="date" class="f-last-contact" value="${mmddyyyyToIso(r.last_contact_date)}"></div>
+        <div class="drawer-field"><label>Next Follow-Up Date</label><input type="date" class="f-followup" value="${mmddyyyyToIso(r.next_follow_up_date)}"></div>
+      </div>
+      <div class="drawer-field" style="margin-top:12px;">
+        <label>Follow-Up Status</label>
+        ${chipPickerHtml('f-followup-override', FOLLOWUP_OVERRIDE_OPTIONS, r.follow_up_status_override, 'Auto (from date above)')}
+      </div>
+      <div class="drawer-field" style="margin-top:12px;"><label>Follow-Up Reason</label><input class="f-followup-reason" value="${escapeHtml(r.follow_up_reason||'')}" placeholder="e.g. Lease renewal conversation"></div>
+    </div>
+    <div class="drawer-section">
+      <div class="drawer-section-title">Annual 58 Home Review</div>
+      <div class="drawer-field">
+        <label>Review Status</label>
+        ${chipPickerHtml('f-review-status', ANNUAL_REVIEW_STATUSES, r.annual_review_status || 'Not Applicable')}
+      </div>
+      <div class="drawer-grid" style="margin-top:12px;">
+        <div class="drawer-field"><label>Last Review Date</label><input type="date" class="f-review-last" value="${mmddyyyyToIso(r.annual_review_last_date)}"></div>
+        <div class="drawer-field"><label>Next Review Date</label><input type="date" class="f-review-next" value="${mmddyyyyToIso(r.annual_review_next_date)}"></div>
+        <div class="drawer-field"><label>Estimated Current Value</label><input class="f-est-value" value="${r.estimated_current_value != null ? r.estimated_current_value : ''}" placeholder="$"></div>
+        <div class="drawer-field"><label>Original Purchase Price</label><input class="f-orig-price" value="${r.original_purchase_price != null ? r.original_purchase_price : ''}" placeholder="$"></div>
+        <div class="drawer-field"><label>Estimated Appreciation</label><input value="${drawerAppreciation != null ? '$'+drawerAppreciation.toLocaleString() : '—'}" disabled></div>
+        <div class="drawer-field"></div>
+        <div class="drawer-field"><label>Comparable Sales Link</label><input class="f-comps-link" value="${escapeHtml(r.comparable_sales_link||'')}" placeholder="https://…"></div>
+        <div class="drawer-field"><label>Printable Report Link</label><input class="f-report-link" value="${escapeHtml(r.printable_report_link||'')}" placeholder="https://…"></div>
       </div>
     </div>
     <div class="drawer-section">
@@ -2728,6 +2888,8 @@ async function saveDrawer(mls){
   const d = document.getElementById('drawerBody');
   const same = d.querySelector('#mailingIsSame')?.checked;
   const v = (sel) => d.querySelector(sel)?.value?.trim() ?? '';
+  const clientTypes = Array.from(d.querySelectorAll('.f-client-type:checked')).map(cb=>cb.value);
+  const overridden = d.querySelector('.f-info-override')?.checked || false;
   const updates = {
     owner1_name: v('.f-o1-name'),
     owner1_email: v('.f-o1-email'),
@@ -2738,24 +2900,43 @@ async function saveDrawer(mls){
     owner2_phone: v('.f-o2-phone'),
     owner2_birthday: v('.f-o2-bday'),
     relationship_status: v('.f-rel-status'),
-    next_follow_up_date: v('.f-followup'),
+    client_type: clientTypes,
+    assigned_agent: v('.f-assigned-agent'),
+    referred_by: v('.f-referred-by'),
     client_note: v('.f-client-note'),
+    last_contact_date: isoToMmddyyyy(v('.f-last-contact')),
+    next_follow_up_date: isoToMmddyyyy(v('.f-followup')),
+    follow_up_reason: v('.f-followup-reason'),
+    follow_up_status_override: v('.f-followup-override'),
+    annual_review_status: v('.f-review-status'),
+    annual_review_last_date: isoToMmddyyyy(v('.f-review-last')),
+    annual_review_next_date: isoToMmddyyyy(v('.f-review-next')),
+    comparable_sales_link: v('.f-comps-link'),
+    printable_report_link: v('.f-report-link'),
     address: v('.f-address'),
     city: v('.f-city'),
     sold_date: v('.f-sold-date'),
     property_status: v('.f-prop-status'),
     lease_end_date: v('.f-lease-end'),
-    client_name: v('.f-o1-name') + (v('.f-o2-name') ? ' & ' + v('.f-o2-name') : ''),
-    client_email: v('.f-o1-email'),
     mailing_address: same ? '' : v('.f-mailing-address'),
     mailing_city: same ? '' : v('.f-mailing-city'),
     mailing_state: same ? '' : v('.f-mailing-state'),
     mailing_zip: same ? '' : v('.f-mailing-zip'),
+    client_info_status_overridden: overridden,
     updated_at: new Date().toISOString(),
   };
+  const estVal = v('.f-est-value');
+  const origVal = v('.f-orig-price');
+  updates.estimated_current_value = estVal ? Number(estVal.replace(/[^0-9.-]/g,'')) : null;
+  updates.original_purchase_price = origVal ? Number(origVal.replace(/[^0-9.-]/g,'')) : null;
+  updates.client_info_status = overridden
+    ? v('.f-info-status')
+    : computeAutoInfoStatus({...updates});
+  updates.client_name = updates.owner1_name + (updates.owner2_name ? ' & ' + updates.owner2_name : '');
+  updates.client_email = [updates.owner1_email, updates.owner2_email].filter(Boolean).join('; ');
   Object.assign(r, updates);
   const { error } = await sb.from(TABLE).update(updates).eq('mls_number', mls);
-  if(!error){ closeEditDrawer(); render(); }
+  if(!error){ closeEditDrawer(); updateStats(); renderUpcoming(); render(); showToast('Saved — everyone viewing this page now sees the update'); }
   else { alert('Error saving — check console'); console.error(error); }
 }
 
