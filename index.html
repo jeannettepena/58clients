@@ -820,6 +820,42 @@ function activityLogHtml(mls){
 }
 
 // ---------------------------------------------------------------------------
+// 58 HUB pipeline integration — "In Pipeline" badge
+// ---------------------------------------------------------------------------
+const HUB_STATUS_LABEL = {pocket:'Coming Soon','coming-soon':'Coming Soon',active:'Active','under-contract':'Under Contract'};
+let PIPELINE_INDEX = { byMls:{}, byName:{} };
+function normName(s){ return (s||'').toLowerCase().trim().replace(/\s+/g,' '); }
+async function loadHubPipeline(){
+  try{
+    const { data, error } = await sb.from('ops_state').select('data').eq('id','main').single();
+    if(error || !data || !data.data) return;
+    const props = data.data.properties || [];
+    const byMls = {}, byName = {};
+    props.forEach(p=>{
+      if(!p || !p.status) return;
+      if(p.status==='sold' || p.status==='leased') return; // closed deals are no longer "in pipeline"
+      if(p.crmMls) byMls[String(p.crmMls)] = p;
+      const nm = normName(p.owner);
+      if(nm && !byName[nm]) byName[nm] = p; // first live match wins for the fuzzy fallback
+    });
+    PIPELINE_INDEX = { byMls, byName };
+  }catch(e){ /* 58 HUB pipeline is optional context here — never block the CRM on it */ }
+}
+function pipelineMatch(r){
+  if(!r) return null;
+  if(r.mls_number && PIPELINE_INDEX.byMls[String(r.mls_number)]) return PIPELINE_INDEX.byMls[String(r.mls_number)];
+  const nm = normName(r.owner1_name);
+  if(nm && PIPELINE_INDEX.byName[nm]) return PIPELINE_INDEX.byName[nm];
+  return null;
+}
+function pipelineBadgeHtml(r){
+  const m = pipelineMatch(r);
+  if(!m) return '';
+  const label = HUB_STATUS_LABEL[m.status] || 'Active';
+  return `<span class="cc-tag" style="background:var(--navy);color:var(--champ);font-weight:600;">In Pipeline · ${escapeHtml(label)}</span>`;
+}
+
+// ---------------------------------------------------------------------------
 // Load
 // ---------------------------------------------------------------------------
 async function loadData(){
@@ -832,6 +868,7 @@ async function loadData(){
   }
   records = data.sort((a,b)=> (parseDate(b.sold_date)||new Date(0)) - (parseDate(a.sold_date)||new Date(0)));
   await loadActivityLogs();
+  await loadHubPipeline();
   setSyncStatus('Live — edits save automatically');
   renderViewTabs();
   renderFilters();
@@ -1096,6 +1133,7 @@ function render(){
         </div>
         <div class="cc-address">${escapeHtml(r.address||'')}</div>
         <div class="cc-meta">
+          ${pipelineBadgeHtml(r)}
           ${r.sold_date ? `<span class="cc-tag">Closed ${escapeHtml(r.sold_date)}</span>` : ''}
           ${r.mls_number ? `<span class="cc-tag">MLS# ${escapeHtml(r.mls_number)}</span>` : ''}
           ${(typeArr(r)||[]).map(t=>`<span class="cc-tag">${escapeHtml(t)}</span>`).join('')}
@@ -2170,6 +2208,7 @@ function renderByProperty(recs){
       </div>
       <div class="cc-address" style="font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--ink);">${escapeHtml(r.owner1_name||'—')}${r.owner2_name?' & '+escapeHtml(r.owner2_name):''}</div>
       <div class="cc-meta" style="margin-top:6px;">
+        ${pipelineBadgeHtml(r)}
         ${r.mls_number?`<span class="cc-tag">MLS# ${escapeHtml(r.mls_number)}</span>`:''}
         <span class="cc-tag">${escapeHtml(dateLabel)}</span>
         ${r.sale_price?`<span class="cc-tag">${escapeHtml(r.sale_price)}</span>`:''}
@@ -2210,6 +2249,7 @@ function renderGrouped(list){
       const d = parseDate(p.lease_end_date); if(!d) return false;
       return Math.round((d - todayDate())/86400000) <= 60;
     });
+    const inPipeline = g.properties.some(function(p){ return !!pipelineMatch(p); });
     html.push('<div class="client-group" id="cg-' + gIdx + '">');
     html.push('<div class="client-group-head">');
     html.push('<div style="flex:1;min-width:0;">');
@@ -2219,6 +2259,7 @@ function renderGrouped(list){
     }
     html.push('<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">');
     if(relStatus) html.push('<span class="cc-status ' + statusClass + '" style="font-size:9px;padding:2px 8px;">' + escapeHtml(relStatus) + '</span>');
+    if(inPipeline) html.push('<span class="cc-tag" style="background:var(--navy);color:var(--champ);font-weight:600;">In Pipeline</span>');
     html.push('<span class="cg-count">' + propCount + ' ' + (propCount===1?'property':'properties') + '</span>');
     if(hasAnniv) html.push('<span style="font-size:9px;padding:2px 8px;border-radius:20px;background:var(--champ-wash);color:var(--navy);font-weight:500;">Anniversary soon</span>');
     if(hasLeaseAlert) html.push('<span style="font-size:9px;padding:2px 8px;border-radius:20px;background:#FFEBEE;color:#C62828;font-weight:500;">Lease alert</span>');
